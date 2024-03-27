@@ -1,0 +1,2 @@
+[04-Aug-2022 23:29:43 America/Chicago] PHP Warning:  include(assets/vapors/meta.php): Failed to open stream: No such file or directory in /home2/roadvirus/svde.rip/assets/vapors/head.php on line 23
+[04-Aug-2022 23:29:43 America/Chicago] PHP Warning:  include(): Failed opening 'assets/vapors/meta.php' for inclusion (include_path='.:/opt/cpanel/ea-php80/root/usr/share/pear') in /home2/roadvirus/svde.rip/assets/vapors/head.php on line 23
