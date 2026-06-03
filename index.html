@@ -1,0 +1,2686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVDE — Sade Black</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=VT323&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════ */
+:root {
+  --lav:    #d4c8f0;
+  --lav2:   #ebe5ff;
+  --lav3:   #f5f0ff;
+  --peach:  #f7c5b0;
+  --peach2: #fde8dc;
+  --mint:   #b8e8d8;
+  --mint2:  #dff5ed;
+  --blue:   #a8d4f0;
+  --blue2:  #ddeeff;
+  --rose:   #f0a8c8;
+  --rose2:  #fddcec;
+  --cream:  #faf8f5;
+  --paper:  #f0ede8;
+  --warm:   #e8e0d8;
+  --ink:    #2a2035;
+  --ink2:   #5a4f70;
+  --ink3:   #8a7fa0;
+  --pepsi-r:#e8304a;
+  --pepsi-b:#0050b4;
+  --win-bar:#c8b8e8;
+  --win-bg: rgba(248,245,255,0.88);
+  --glass:  rgba(255,255,255,0.55);
+  --glass2: rgba(255,255,255,0.75);
+  --shadow: 0 8px 32px rgba(120,80,180,0.12), 0 2px 8px rgba(120,80,180,0.08);
+  --shadow-sm: 0 2px 12px rgba(120,80,180,0.1);
+  --mono: 'VT323', monospace;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'DM Sans', sans-serif;
+  --r: 12px;
+  --r-lg: 18px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { overflow-x:hidden; scroll-behavior:smooth; }
+
+body {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  cursor: none;
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* warm cream base */
+  background-color: #f7f3ff;
+  /* layered floral tile — denser, richer */
+  background-image:
+    /* petals */
+    radial-gradient(ellipse 5px 9px at 10% 15%, rgba(240,168,200,0.55) 0%, transparent 100%),
+    radial-gradient(ellipse 4px 7px at 30% 8%,  rgba(184,232,216,0.45) 0%, transparent 100%),
+    radial-gradient(ellipse 5px 9px at 55% 18%, rgba(212,200,240,0.55) 0%, transparent 100%),
+    radial-gradient(ellipse 4px 7px at 75% 5%,  rgba(247,197,176,0.5)  0%, transparent 100%),
+    radial-gradient(ellipse 5px 9px at 92% 20%, rgba(168,212,240,0.45) 0%, transparent 100%),
+    /* bloom halos */
+    radial-gradient(circle 28px at 20% 50%, rgba(240,168,200,0.14) 0%, transparent 70%),
+    radial-gradient(circle 32px at 70% 48%, rgba(168,212,240,0.12) 0%, transparent 70%),
+    radial-gradient(circle 22px at 45% 72%, rgba(212,200,240,0.16) 0%, transparent 70%),
+    radial-gradient(circle 18px at 85% 68%, rgba(184,232,216,0.14) 0%, transparent 70%),
+    radial-gradient(circle 24px at 8%  80%, rgba(247,197,176,0.14) 0%, transparent 70%),
+    /* stems — thin vertical accents */
+    linear-gradient(180deg, rgba(184,232,216,0.08) 0%, transparent 60%),
+    /* base tint */
+    linear-gradient(135deg, #f9f5ff 0%, #fff5fa 50%, #f5faff 100%);
+  background-size: 160px 160px, 160px 160px, 160px 160px, 160px 160px, 160px 160px,
+                   160px 160px, 160px 160px, 160px 160px, 160px 160px, 160px 160px,
+                   100% 100%, 100% 100%;
+  background-attachment: fixed, fixed, fixed, fixed, fixed,
+                          fixed, fixed, fixed, fixed, fixed,
+                          fixed, fixed;
+}
+
+/* dithered grain texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 1;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* animated mesh gradient — lives behind all windows */
+#mesh {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  opacity: 0.7;
+}
+
+/* soft edge vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 2;
+  background: radial-gradient(ellipse 90% 90% at 50% 50%, transparent 55%, rgba(200,180,240,0.18) 100%);
+}
+
+/* ══════════════════════════════════════════
+   CURSOR
+══════════════════════════════════════════ */
+#cursor {
+  position: fixed; z-index: 9999;
+  pointer-events: none;
+  /* canvas cursor — sized in JS */
+  image-rendering: pixelated;
+}
+
+/* ══════════════════════════════════════════
+   MACINTOSH WINDOW CHROME
+══════════════════════════════════════════ */
+.win {
+  background: rgba(255,253,255,0.82);
+  backdrop-filter: blur(28px) saturate(1.8) brightness(1.04);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) brightness(1.04);
+  border: 1px solid rgba(255,255,255,0.92);
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 12px 48px rgba(160,100,220,0.13),
+    0 3px 12px rgba(160,100,220,0.08),
+    0 0 0 0.5px rgba(180,140,240,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.95);
+  position: relative;
+  overflow: hidden;
+}
+/* soft bloom halo behind each window */
+.win::before {
+  content: '';
+  position: absolute; inset: -30px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(220,200,255,0.18) 0%, transparent 70%);
+  pointer-events: none; z-index: -1;
+}
+.win-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px;
+  background: linear-gradient(180deg,
+    rgba(215,200,248,0.95) 0%,
+    rgba(200,182,240,0.85) 55%,
+    rgba(190,170,235,0.75) 100%);
+  border-bottom: 1px solid rgba(180,155,230,0.25);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  user-select: none;
+  /* subtle horizontal stripe texture */
+  background-image:
+    linear-gradient(180deg, rgba(215,200,248,0.95) 0%, rgba(190,170,235,0.8) 100%),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 1px, rgba(255,255,255,0.08) 1px, rgba(255,255,255,0.08) 2px);
+}
+.win-dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.win-dot:nth-child(1) { background: radial-gradient(circle at 35% 35%, #ff8f8f, #ff5f5f); }
+.win-dot:nth-child(2) { background: radial-gradient(circle at 35% 35%, #ffe08a, #ffc500); }
+.win-dot:nth-child(3) { background: radial-gradient(circle at 35% 35%, #8fdd9f, #5dc870); }
+.win-title {
+  flex: 1; text-align: center;
+  font-family: var(--mono); font-size: 17px;
+  color: var(--ink2); letter-spacing: .06em;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* ══════════════════════════════════════════
+   NAV
+══════════════════════════════════════════ */
+#nav {
+  position: fixed; top: 16px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex; align-items: center; gap: 4px;
+  padding: 7px 12px;
+  background: rgba(255,252,255,0.88);
+  backdrop-filter: blur(30px) saturate(2);
+  -webkit-backdrop-filter: blur(30px) saturate(2);
+  border: 1px solid rgba(255,255,255,0.95);
+  border-radius: 100px;
+  box-shadow:
+    0 8px 32px rgba(160,100,220,0.14),
+    0 2px 8px rgba(160,100,220,0.08),
+    inset 0 1px 0 rgba(255,255,255,1);
+}
+.nav-logo {
+  font-family: var(--serif); font-style: italic;
+  font-size: 17px; color: var(--ink);
+  text-decoration: none; cursor: none;
+  padding: 4px 10px;
+  letter-spacing: .02em;
+}
+.nav-sep {
+  width: 1px; height: 16px;
+  background: rgba(120,80,180,0.15);
+}
+.nav-links { display: flex; gap: 2px; }
+.nav-links a {
+  font-size: 12px; font-weight: 500; letter-spacing: .02em;
+  color: var(--ink2); text-decoration: none; cursor: none;
+  padding: 5px 14px; border-radius: 100px;
+  transition: background .18s, color .18s;
+}
+.nav-links a:hover, .nav-links a.active {
+  background: rgba(120,80,180,0.1);
+  color: var(--ink);
+}
+
+/* ══════════════════════════════════════════
+   PAGES
+══════════════════════════════════════════ */
+.page { display: none; padding-top: 80px; min-height: 100vh; position: relative; z-index: 1; }
+.page.active { display: block; }
+.page-wrap { animation: pg-in .5s cubic-bezier(.16,1,.3,1) both; }
+@keyframes pg-in { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+.reveal { opacity:0; transform:translateY(16px); transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1); }
+.reveal.in { opacity:1; transform:none; }
+
+/* ══════════════════════════════════════════
+   HOME
+══════════════════════════════════════════ */
+.home-layout {
+  max-width: 1100px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* HERO WINDOW */
+.hero-win { grid-column: 1 / -1; position: relative; }
+.hero-inner {
+  padding: 48px 56px 52px;
+  position: relative; overflow: hidden;
+}
+
+/* pepsi globe — pure CSS */
+.pepsi-globe {
+  position: absolute;
+  right: -60px; top: -60px;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--pepsi-r) 0deg, var(--pepsi-r) 150deg,
+    white 150deg, white 180deg,
+    var(--pepsi-b) 180deg, var(--pepsi-b) 360deg
+  );
+  opacity: 0.07;
+  animation: globe-spin 20s linear infinite;
+}
+@keyframes globe-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* floating flowers CSS */
+.hero-inner::before {
+  content: '✿ ❀ ✾ ✿ ❀';
+  position: absolute; bottom: 20px; right: 56px;
+  font-size: 22px;
+  letter-spacing: 10px;
+  opacity: 0.12;
+  animation: float-flowers 6s ease-in-out infinite;
+}
+@keyframes float-flowers {
+  0%,100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-8px) rotate(3deg); }
+}
+
+.hero-eyebrow {
+  font-family: var(--mono); font-size: 20px;
+  letter-spacing: .18em; color: var(--ink3);
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.hero-name {
+  font-family: var(--serif);
+  font-size: clamp(80px, 11vw, 148px);
+  font-weight: 700; line-height: .85;
+  letter-spacing: -.025em;
+  color: var(--ink);
+  position: relative;
+}
+
+/* S — solid with stacked blue drop shadow */
+.hero-name .sk {
+  color: var(--ink);
+  text-shadow:
+    1px 1px 0 rgba(0,80,180,0.3),
+    2px 2px 0 rgba(0,80,180,0.18),
+    3px 3px 0 rgba(0,80,180,0.08);
+}
+
+/* V — thin pepsi-blue outline only, hollow */
+.hero-name .ol {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--pepsi-b);
+}
+
+/* D — italic, solid ink + thick cyan stroke bleeding behind */
+.hero-name .ig {
+  font-style: italic;
+  color: var(--ink);
+  -webkit-text-stroke: 5px rgba(168,212,240,0.55);
+  paint-order: stroke fill;
+}
+
+/* E — outline only with emboss shadow */
+.hero-name .rb {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(60,30,100,0.28);
+  text-shadow:
+    3px 3px 0 rgba(212,200,240,0.7),
+    5px 5px 0 rgba(200,180,240,0.3),
+    7px 7px 10px rgba(120,80,180,0.1);
+}
+
+.hero-tagline {
+  margin-top: 22px;
+  font-family: var(--serif); font-style: italic;
+  font-size: clamp(1.05rem, 1.9vw, 1.4rem);
+  line-height: 1.7; color: var(--ink2);
+  max-width: 46ch;
+}
+.hero-tagline em { color: var(--pepsi-r); font-style: normal; font-weight: 700; }
+
+.hero-pills {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-top: 28px;
+}
+.pill {
+  padding: 7px 18px; border-radius: 100px;
+  font-size: 11px; font-weight: 500; letter-spacing: .04em;
+  border: 1px solid rgba(255,255,255,0.7);
+  cursor: none; text-decoration: none;
+  color: var(--ink2);
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 2px 8px rgba(160,100,220,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.pill:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(160,100,220,0.18), inset 0 1px 0 rgba(255,255,255,0.9); }
+.pill-lav  { background: linear-gradient(135deg, #ece6ff, #ddd5f8); }
+.pill-mint { background: linear-gradient(135deg, #dff6ed, #c8eedf); }
+.pill-peach{ background: linear-gradient(135deg, #fde8dc, #f8d4c4); }
+.pill-blue { background: linear-gradient(135deg, #ddeeff, #c8e4f8); }
+.pill-rose { background: linear-gradient(135deg, #fddcec, #f8c8de); }
+
+/* TICKER — now building */
+.ticker-win { grid-column: 1 / -1; }
+.ticker-inner-wrap {
+  padding: 0 20px;
+  overflow: hidden; display: flex; align-items: center; gap: 20px;
+}
+.ticker-label {
+  font-family: var(--mono); font-size: 15px;
+  color: var(--ink3); white-space: nowrap; flex-shrink: 0;
+  letter-spacing: .1em;
+}
+.ticker-track { overflow: hidden; flex: 1; }
+.ticker-scroll {
+  display: flex; gap: 2.5rem; white-space: nowrap;
+  animation: tick 22s linear infinite;
+}
+.ticker-scroll span {
+  font-size: 12px; letter-spacing: .04em; color: var(--ink2);
+}
+.ticker-scroll span::before { content: '✿  '; color: var(--pepsi-r); opacity: .6; }
+@keyframes tick { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+
+/* SIDEBAR WINDOW — status */
+.sidebar-win { }
+.sidebar-inner { padding: 20px 22px; }
+.sidebar-row {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(120,80,180,0.07);
+}
+.sidebar-row:last-child { border-bottom: none; }
+.sidebar-key {
+  font-family: var(--mono); font-size: 13px;
+  color: var(--ink3); letter-spacing: .1em;
+}
+.sidebar-val {
+  font-size: 13px; font-weight: 500; color: var(--ink);
+  line-height: 1.5;
+}
+.sidebar-val.active-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #6bcb77;
+  animation: blink-dot 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes blink-dot { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+/* MAIN LIST WINDOW */
+.list-win { grid-column: 1 / -1; }
+
+.filter-bar {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(120,80,180,0.07);
+}
+.filter-btn {
+  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 100px;
+  background: transparent; border: 1px solid rgba(120,80,180,0.15);
+  color: var(--ink3); cursor: none; transition: all .15s;
+}
+.filter-btn:hover { background: var(--lav2); color: var(--ink); border-color: transparent; }
+.filter-btn.active { background: var(--ink); color: #fff; border-color: transparent; }
+
+.proj-list { list-style: none; }
+.proj-list li { border-bottom: 1px solid rgba(120,80,180,0.06); }
+.proj-list li:last-child { border-bottom: none; }
+.proj-list li[data-hidden] { display: none !important; }
+
+.proj-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto auto;
+  align-items: center; gap: 16px;
+  padding: 20px 28px;
+  text-decoration: none; color: inherit; cursor: none;
+  transition: background .18s;
+  position: relative; overflow: hidden;
+}
+.proj-row::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--pepsi-r), var(--pepsi-b));
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform .25s cubic-bezier(.16,1,.3,1);
+  border-radius: 0 2px 2px 0;
+}
+.proj-row::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    rgba(220,200,255,0.18) 0%,
+    rgba(255,220,240,0.12) 50%,
+    transparent 100%);
+  opacity: 0; transition: opacity .25s;
+}
+.proj-row:hover { background: rgba(220,200,255,0.1); }
+.proj-row:hover::before { transform: scaleY(1); }
+.proj-row:hover::after  { opacity: 1; }
+.proj-row:hover .proj-name { letter-spacing: .06em; color: var(--ink); }
+
+.proj-num {
+  font-family: var(--mono); font-size: 17px;
+  color: var(--ink3); opacity: .4; text-align: right;
+}
+.proj-name {
+  font-family: var(--serif); font-size: clamp(1.6rem,2.6vw,2.6rem);
+  font-weight: 700; line-height: 1; letter-spacing: .01em;
+  color: var(--ink);
+  transition: letter-spacing .3s cubic-bezier(.16,1,.3,1), color .2s;
+}
+.proj-cat {
+  font-size: 10px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink3);
+  padding: 3px 10px; border-radius: 100px;
+  white-space: nowrap;
+}
+.proj-year {
+  font-family: var(--mono); font-size: 15px;
+  color: var(--ink3); opacity: .5; white-space: nowrap;
+}
+
+/* colour-coded category pills */
+.cat-game    { background: var(--lav2); color: #6040a0; }
+.cat-audio   { background: var(--mint2); color: #205040; }
+.cat-tool    { background: var(--peach2); color: #803020; }
+.cat-platform{ background: var(--blue2); color: #003080; }
+.cat-web     { background: var(--rose2); color: #802050; }
+
+/* ══════════════════════════════════════════
+   WORK PAGE
+══════════════════════════════════════════ */
+.work-layout {
+  max-width: 1100px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.page-hdr-win { }
+.page-hdr-inner { padding: 32px 40px 28px; }
+.page-hdr-title {
+  font-family: var(--serif); font-size: clamp(48px,8vw,96px);
+  font-weight: 700; line-height: .85; letter-spacing: -.02em;
+  color: transparent; -webkit-text-stroke: 1.5px rgba(60,30,100,.2);
+}
+
+/* ══════════════════════════════════════════
+   GAMES PAGE
+══════════════════════════════════════════ */
+.games-layout {
+  max-width: 1100px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.micro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 20px;
+}
+.micro-card {
+  background: rgba(255,253,255,0.78);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid rgba(255,255,255,0.88);
+  border-radius: var(--r);
+  padding: 22px 20px;
+  box-shadow: 0 4px 20px rgba(160,100,220,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+  cursor: none;
+  transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s;
+  position: relative; overflow: hidden;
+}
+.micro-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg,
+    rgba(220,200,255,0.2) 0%,
+    rgba(255,220,235,0.15) 50%,
+    rgba(200,230,255,0.2) 100%);
+  opacity: 0; transition: opacity .2s;
+  pointer-events: none;
+}
+.micro-card:hover { transform: translateY(-4px) rotate(.4deg); box-shadow: 0 12px 36px rgba(160,100,220,0.18), inset 0 1px 0 rgba(255,255,255,0.95); }
+.micro-card:hover::before { opacity: 1; }
+.mgc-name {
+  font-family: var(--serif); font-weight: 700; font-size: 1.5rem;
+  margin-bottom: 4px; color: var(--ink);
+}
+.mgc-year {
+  font-family: var(--mono); font-size: 13px; color: var(--ink3);
+  margin-bottom: 8px;
+}
+.mgc-desc { font-size: 12px; line-height: 1.7; color: var(--ink2); }
+.mgc-badge {
+  display: inline-block; margin-top: 12px;
+  font-size: 10px; font-weight: 500; letter-spacing: .06em;
+  text-transform: uppercase; padding: 3px 10px;
+  border-radius: 100px; background: var(--lav2); color: #6040a0;
+}
+.mgc-badge.concept { background: var(--warm); color: var(--ink3); }
+
+/* ══════════════════════════════════════════
+   PROJECT DETAIL
+══════════════════════════════════════════ */
+#page-project { padding-top: 80px; }
+.proj-detail-layout {
+  max-width: 1100px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.proj-back-btn {
+  font-size: 11px; font-weight: 500; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink3); background: none;
+  border: none; cursor: none; font-family: var(--sans);
+  padding: 0; transition: color .15s;
+}
+.proj-back-btn::before { content: '← '; color: var(--pepsi-b); }
+.proj-back-btn:hover { color: var(--ink); }
+
+.proj-title-inner { padding: 40px 48px 36px; position: relative; overflow: hidden; }
+
+/* animated gradient wash inherited from hero */
+.proj-title-inner {
+  background: linear-gradient(135deg,
+    rgba(230,215,255,0.35) 0%,
+    rgba(255,215,235,0.28) 40%,
+    rgba(215,235,255,0.3) 100%);
+  background-size: 300% 300%;
+  animation: hero-wash 16s ease-in-out infinite;
+}
+
+/* ghost title — faint oversized text behind */
+.proj-title-inner::before {
+  content: attr(data-name);
+  position: absolute;
+  top: 50%; left: 40px;
+  transform: translateY(-50%);
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(5rem,13vw,13rem);
+  line-height: 1; letter-spacing: -.02em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(160,120,220,0.08);
+  pointer-events: none; user-select: none;
+  white-space: nowrap; overflow: hidden;
+  width: calc(100% - 80px);
+}
+
+/* VHS scanline stripe */
+.proj-title-inner::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0; width: 8px;
+  background: linear-gradient(180deg,
+    var(--pepsi-r) 0%, var(--pepsi-r) 44%,
+    #fff 44%, #fff 56%,
+    var(--pepsi-b) 56%, var(--pepsi-b) 100%);
+  opacity: 0.45;
+}
+
+/* contact words upgrade */
+.contact-word {
+  font-family: var(--serif);
+  font-size: min(16vw, 180px);
+  font-weight: 700; line-height: .88; display: block;
+  letter-spacing: -.02em;
+  position: relative;
+}
+.contact-word.fill {
+  color: var(--ink);
+  text-shadow:
+    2px 2px 0 rgba(212,200,240,0.8),
+    4px 4px 0 rgba(200,180,240,0.4),
+    6px 6px 12px rgba(120,80,180,0.1);
+}
+.contact-word.outline {
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(60,30,100,0.18);
+  /* ghost offset */
+  filter: drop-shadow(3px 3px 0 rgba(0,80,180,0.12)) drop-shadow(-2px -1px 0 rgba(232,48,74,0.1));
+}
+.contact-word.blend {
+  /* italic outline + solid partial — letterforms collide */
+  font-style: italic;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--pepsi-b);
+  text-shadow: 2px 0 0 rgba(232,48,74,0.3);
+}
+
+/* page header title — push it further */
+.page-hdr-title {
+  font-family: var(--serif); font-size: clamp(48px,8vw,96px);
+  font-weight: 700; line-height: .85; letter-spacing: -.02em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(60,30,100,0.16);
+  position: relative;
+  /* ghost double */
+  text-shadow:
+    3px 3px 0 rgba(212,200,240,0.4),
+    -1px -1px 0 rgba(232,48,74,0.08),
+    6px 6px 0 rgba(168,212,240,0.15);
+}
+
+.proj-hero-name {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(3.5rem,9vw,9rem);
+  line-height: .88; letter-spacing: -.02em;
+  color: var(--ink);
+  position: relative;
+}
+
+/* solid fill — default */
+.proj-hero-name .s  { color: var(--ink); }
+
+/* thin pepsi-blue outline, no fill */
+.proj-hero-name .ol {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--pepsi-b);
+}
+
+/* fat outline — thicker red stroke */
+.proj-hero-name .ol2 {
+  color: transparent;
+  -webkit-text-stroke: 3px var(--pepsi-r);
+  letter-spacing: -.01em;
+}
+
+/* ghost — very faint fill + offset drop */
+.proj-hero-name .gh {
+  color: rgba(120,80,180,0.18);
+  text-shadow:
+    2px 3px 0 rgba(232,48,74,0.15),
+    -1px -1px 0 rgba(0,80,180,0.12);
+}
+
+/* holo — gradient fill via bg-clip */
+.proj-hero-name .hl {
+  background: linear-gradient(135deg, var(--pepsi-b) 0%, #9040e0 50%, var(--pepsi-r) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* stacked — solid fill PLUS outline shadow bleed */
+.proj-hero-name .sk {
+  color: var(--ink);
+  text-shadow:
+    0   0    0   rgba(0,80,180,0),
+    1px 1px  0   rgba(0,80,180,0.25),
+    2px 2px  0   rgba(0,80,180,0.15),
+    3px 3px  0   rgba(0,80,180,0.08);
+}
+
+/* ink-on-ghost — dark fill, blue outline ring bleeding behind */
+.proj-hero-name .ig {
+  color: var(--ink);
+  -webkit-text-stroke: 4px rgba(168,212,240,0.6);
+  paint-order: stroke fill;
+}
+
+/* raised — solid + bottom edge shadow like emboss */
+.proj-hero-name .rb {
+  color: var(--ink);
+  text-shadow:
+    0  2px 0 rgba(212,200,240,0.9),
+    0  4px 0 rgba(200,180,240,0.5),
+    0  6px 8px rgba(120,80,180,0.12);
+}
+
+/* italic outline cross — italic + thin stroke only */
+.proj-hero-name .ic {
+  font-style: italic;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--pepsi-b);
+}
+
+/* wide spaced ghost */
+.proj-hero-name .ws {
+  color: rgba(180,140,240,0.22);
+  letter-spacing: .12em;
+  -webkit-text-stroke: 0.5px rgba(120,80,180,0.3);
+}
+/* decorative pepsi stripe on detail hero */
+.proj-title-inner::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0; width: 8px;
+  background: linear-gradient(180deg, var(--pepsi-r) 0%, var(--pepsi-r) 45%, #fff 45%, #fff 55%, var(--pepsi-b) 55%, var(--pepsi-b) 100%);
+  opacity: 0.5;
+}
+
+.proj-meta-win { }
+.proj-meta-inner {
+  padding: 20px 28px;
+  display: flex; gap: 32px; flex-wrap: wrap;
+}
+.proj-meta-item { display: flex; flex-direction: column; gap: 4px; }
+.proj-meta-label {
+  font-family: var(--mono); font-size: 13px;
+  letter-spacing: .1em; color: var(--ink3);
+}
+.proj-meta-value { font-size: 14px; font-weight: 500; color: var(--ink); }
+
+.proj-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 14px; border-radius: 100px; font-size: 11px; font-weight: 500;
+  letter-spacing: .04em;
+}
+.proj-status.active  { background: var(--mint2); color: #1a5040; }
+.proj-status.deployed{ background: var(--blue2); color: #003070; }
+.proj-status.concept { background: var(--warm); color: var(--ink3); }
+
+/* BANNER */
+.proj-banner {
+  width: 100%; aspect-ratio: 16/7;
+  position: relative; overflow: hidden;
+  border-radius: var(--r);
+}
+/* shared banner style overrides for light mode */
+.proj-banner { background: var(--lav3) !important; border: 1px solid rgba(120,80,180,0.1); }
+.banner-tender { background: linear-gradient(135deg, #f0eeff 0%, #fce8f8 100%) !important; }
+.banner-tender .b-ring { border-color: rgba(120,80,180,0.12) !important; }
+.banner-tender .b-ring:nth-child(1) { border-color: rgba(120,80,180,0.4) !important; }
+.banner-tender .b-pupil { background: var(--pepsi-b) !important; box-shadow: 0 0 30px 10px rgba(0,80,180,0.2) !important; }
+.banner-tender .b-iris { border-color: rgba(0,80,180,0.3) !important; }
+.banner-tender .b-slash { background: linear-gradient(90deg,transparent,rgba(232,48,74,0.4),transparent) !important; }
+.banner-tender .b-line { background: rgba(120,80,180,0.05) !important; }
+.banner-tender .b-pupil { opacity: .8 !important; }
+
+.banner-spore { background: linear-gradient(135deg, #eafaf4 0%, #f0f8ff 100%) !important; }
+.banner-spore .b-node { background: rgba(80,160,120,0.7) !important; }
+.banner-spore .b-glow { background: radial-gradient(ellipse,rgba(80,160,120,.12) 0%,transparent 70%) !important; }
+
+.banner-deadcode { background: linear-gradient(135deg, #fefbf0 0%, #fff5e8 100%) !important; }
+.banner-deadcode .b-bar { background: var(--pepsi-b) !important; }
+.banner-deadcode::after { color: rgba(232,48,74,.6) !important; }
+.banner-deadcode .b-char { color: rgba(120,80,180,.4) !important; }
+
+.banner-ds9000 { background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%) !important; }
+.banner-ds9000 .b-cell { border-color: rgba(0,80,180,0.12) !important; }
+.banner-ds9000 .b-cell.on { background: var(--pepsi-b) !important; border-color: var(--pepsi-b) !important; box-shadow: 0 0 6px rgba(0,80,180,.3) !important; }
+.banner-ds9000 .b-cell.hot { background: var(--pepsi-r) !important; border-color: var(--pepsi-r) !important; box-shadow: 0 0 8px rgba(232,48,74,.3) !important; }
+.banner-ds9000 .b-playhead { background: var(--pepsi-r) !important; }
+
+.banner-deadstar { background: linear-gradient(135deg, #fdf0ff 0%, #fff0f8 100%) !important; }
+.banner-deadstar .b-arc:nth-child(1) { border-color: rgba(232,48,74,.7) !important; }
+.banner-deadstar .b-arc:nth-child(2) { border-color: rgba(0,80,180,.4) !important; }
+.banner-deadstar .b-arc:nth-child(3) { border-color: rgba(120,80,180,.35) !important; }
+.banner-deadstar .b-arc:nth-child(4) { border-color: rgba(232,48,74,.2) !important; }
+.banner-deadstar .b-arc:nth-child(5) { border-color: rgba(0,80,180,.15) !important; }
+.banner-deadstar .b-arc:nth-child(6) { border-color: rgba(120,80,180,.1) !important; }
+.banner-deadstar .b-star-dot { background: var(--pepsi-r) !important; }
+.banner-deadstar::after { box-shadow: 0 0 30px 10px rgba(232,48,74,.15) !important; }
+
+.banner-dropbox { background: linear-gradient(135deg, #f0f4ff 0%, #f8f0ff 100%) !important; }
+.banner-dropbox .b-monitor { border-color: rgba(0,80,180,.25) !important; }
+.banner-dropbox .b-screen { border-color: rgba(0,80,180,.12) !important; background: rgba(0,80,180,.03) !important; }
+.banner-dropbox .b-cursor { color: var(--pepsi-b) !important; }
+.banner-dropbox .b-scanline { background: rgba(0,80,180,.06) !important; }
+.banner-dropbox .b-slot,.banner-dropbox .b-stand { border-color: rgba(0,80,180,.15) !important; background: transparent !important; }
+
+.banner-chromasynth { background: linear-gradient(135deg, #f8f0ff 0%, #f0f8ff 100%) !important; }
+
+.banner-flora { background: linear-gradient(135deg, #f0faf5 0%, #fdf5ff 100%) !important; }
+.banner-seance { background: linear-gradient(135deg, #fff0f8 0%, #f8f0ff 100%) !important; }
+.banner-seance .b-module { border-color: rgba(120,80,180,.15) !important; background: rgba(120,80,180,.02) !important; }
+.banner-seance .b-port { border-color: rgba(120,80,180,.3) !important; }
+
+.banner-gravedigging { background: linear-gradient(135deg, #faf5f0 0%, #f5f0ea 100%) !important; }
+.banner-gravedigging .b-stone { border-color: rgba(120,80,180,.25) !important; }
+.banner-gravedigging .b-cross::before,.banner-gravedigging .b-cross::after { background: rgba(120,80,180,.3) !important; }
+.banner-gravedigging .b-ground { border-color: rgba(120,80,180,.1) !important; background: rgba(120,80,180,.02) !important; }
+
+/* proj body */
+.proj-body-win { }
+.proj-body-inner {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 40px; padding: 32px 36px;
+}
+.proj-section-label {
+  font-family: var(--mono); font-size: 14px;
+  letter-spacing: .12em; color: var(--ink3);
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.proj-desc { font-family: var(--serif); font-style: italic; font-size: 1.05rem; line-height: 1.9; color: var(--ink2); }
+.proj-desc p+p { margin-top: 1rem; }
+.proj-desc em { color: var(--pepsi-r); font-style: normal; }
+
+.proj-specs { list-style: none; }
+.proj-specs li {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: .85rem 0;
+  border-bottom: 1px solid rgba(120,80,180,0.07);
+}
+.proj-specs li:first-child { border-top: 1px solid rgba(120,80,180,0.07); }
+.spec-key { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; color: var(--ink3); text-transform: uppercase; }
+.spec-val { font-size: 13px; color: var(--ink); font-weight: 500; }
+
+.proj-next-win { }
+.proj-next-inner {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 28px 36px;
+}
+.proj-next-label { font-family: var(--mono); font-size: 14px; letter-spacing: .1em; color: var(--ink3); }
+.proj-next-name {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(2rem,4vw,4.5rem);
+  color: transparent; -webkit-text-stroke: 1.5px rgba(60,30,100,.22);
+  text-decoration: none; cursor: none; letter-spacing: -.01em;
+  transition: color .22s, -webkit-text-stroke .22s;
+}
+.proj-next-name:hover { color: var(--ink); -webkit-text-stroke-width: 0px; }
+
+/* ══════════════════════════════════════════
+   ABOUT
+══════════════════════════════════════════ */
+.about-layout {
+  max-width: 1100px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 20px; align-items: start;
+}
+.about-win { }
+.about-inner { padding: 32px 36px; }
+.about-pull {
+  font-family: var(--serif); font-style: italic;
+  font-size: clamp(1.35rem,2.2vw,2.1rem);
+  line-height: 1.42; color: var(--ink); margin-bottom: 28px;
+  position: relative; padding-left: 20px;
+}
+.about-pull::before {
+  content: '';
+  position: absolute; left: 0; top: .2em; bottom: .2em;
+  width: 3px;
+  background: linear-gradient(180deg, var(--pepsi-r), var(--pepsi-b));
+  border-radius: 2px;
+}
+.about-pull em { color: var(--pepsi-r); font-style: normal; font-weight: 700; }
+.about-text { font-size: 13px; line-height: 2; color: var(--ink2); }
+.about-text p+p { margin-top: 1rem; }
+
+.tools-label {
+  font-family: var(--mono); font-size: 14px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink3); margin-bottom: 16px;
+}
+.tools-list { list-style: none; }
+.tools-list li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(120,80,180,0.07);
+  font-size: 13px; color: var(--ink2);
+  transition: color .18s;
+}
+.tools-list li:hover { color: var(--ink); }
+.tool-cat {
+  font-size: 10px; font-weight: 500; letter-spacing: .06em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 100px;
+}
+
+/* liminal river text */
+.river-wrap { padding: 24px 0; overflow: hidden; grid-column: 1/-1; }
+.river-text {
+  white-space: nowrap; display: block;
+  font-family: var(--serif); font-style: italic;
+  font-size: clamp(3rem,7vw,7rem); line-height: 1;
+  background: linear-gradient(90deg, rgba(180,140,240,0.12), rgba(232,48,74,0.1), rgba(0,80,180,0.1), rgba(180,140,240,0.12));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: river 40s linear infinite, river-hue 20s ease-in-out infinite alternate;
+}
+@keyframes river-hue {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+@keyframes river { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+
+/* ══════════════════════════════════════════
+   CONTACT
+══════════════════════════════════════════ */
+.contact-layout {
+  max-width: 1100px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.contact-hero-win { }
+.contact-hero-inner { padding: 56px 56px 52px; position: relative; overflow: hidden; }
+.contact-hero-inner .pepsi-globe { right: -40px; top: -40px; width: 260px; height: 260px; opacity: .05; }
+.contact-words { }
+
+.contact-links-win { }
+.contact-links-inner {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+  gap: 0; padding: 0;
+}
+.cli {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 24px 28px;
+  border-right: 1px solid rgba(120,80,180,0.07);
+}
+.cli:last-child { border-right: none; }
+.cli-label {
+  font-family: var(--mono); font-size: 13px;
+  letter-spacing: .12em; color: var(--ink3); text-transform: uppercase;
+}
+.cli-val {
+  font-family: var(--serif); font-style: italic;
+  font-size: clamp(.95rem,1.5vw,1.2rem); color: var(--ink2);
+  text-decoration: none; cursor: none; transition: color .18s;
+}
+.cli-val:hover { color: var(--pepsi-b); }
+
+/* footer */
+#footer {
+  position: relative; z-index: 1; padding: 20px 40px;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 13px; color: var(--ink3);
+  letter-spacing: .08em;
+  background: rgba(248,245,255,0.6);
+  border-top: 1px solid rgba(120,80,180,0.08);
+  backdrop-filter: blur(8px);
+}
+
+/* ══════════════════════════════════════════
+   LIMINAL DEPTH EXTRAS
+══════════════════════════════════════════ */
+
+/* VHS horizontal glitch stripe — drifts down page slowly */
+#vhs-stripe {
+  position: fixed; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(168,212,240,0.35) 20%,
+    rgba(255,255,255,0.5) 50%,
+    rgba(212,168,240,0.35) 80%,
+    transparent 100%);
+  pointer-events: none; z-index: 9998;
+  animation: vhs-drift 18s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes vhs-drift {
+  0%   { top: -4px; opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 0.6; }
+  100% { top: 100vh; opacity: 0; }
+}
+
+/* second offset stripe */
+#vhs-stripe::after {
+  content: '';
+  position: fixed; left: 0; right: 0; top: inherit;
+  margin-top: 12px; height: 1px;
+  background: linear-gradient(90deg,
+    transparent, rgba(232,48,74,0.2) 40%, transparent);
+}
+
+/* window halo pulse */
+.win::before {
+  animation: halo-pulse 6s ease-in-out infinite;
+}
+@keyframes halo-pulse {
+  0%,100% { opacity: .7; transform: scale(1); }
+  50%     { opacity: 1;  transform: scale(1.04); }
+}
+
+/* liminal hallway stripes on page bg — very faint receding lines */
+.page::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  opacity: .018;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(120,80,180,1) 0px, rgba(120,80,180,1) 1px,
+      transparent 1px, transparent 80px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(120,80,180,1) 0px, rgba(120,80,180,1) 1px,
+      transparent 1px, transparent 120px
+    );
+}
+
+/* sticker colour upgrades */
+.stk:nth-child(odd)  { color: rgba(232,48,74,0.7); }
+.stk:nth-child(even) { color: rgba(0,80,180,0.5);  }
+.stk:nth-child(3n)   { color: rgba(120,80,180,0.6); }
+
+/* deeper sidebar hover */
+.sidebar-row:hover .sidebar-val { color: var(--pepsi-b); }
+
+/* hero name — slow ambient glow breathe */
+@keyframes name-breathe {
+  0%,100% { filter: none; }
+  50% { filter: drop-shadow(0 0 40px rgba(212,200,240,0.4)) drop-shadow(0 0 80px rgba(168,212,240,0.2)); }
+}
+
+/* proj list rows — staggered left border colours per category */
+.cat-game    + .proj-name { color: #5030a0; }
+li[data-cat="game"]   .proj-row::before { background: linear-gradient(180deg,#9060e0,#6040c0); }
+li[data-cat="audio"]  .proj-row::before { background: linear-gradient(180deg,var(--mint),#40b090); }
+li[data-cat="tool"]   .proj-row::before { background: linear-gradient(180deg,var(--peach),#e08050); }
+li[data-cat="platform"].proj-row::before{ background: linear-gradient(180deg,var(--blue),#4090d0); }
+li[data-cat="web"]    .proj-row::before { background: linear-gradient(180deg,var(--rose),#d06090); }
+#stickers {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 3;
+  overflow: hidden;
+}
+.stk {
+  position: absolute;
+  font-size: 32px; line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(160,100,220,0.18));
+  animation: stk-float 8s ease-in-out infinite;
+  opacity: 0.55;
+  user-select: none;
+}
+.stk:nth-child(1)  { top:12%; left:3%;   animation-delay:0s;    animation-duration:9s;  font-size:28px; }
+.stk:nth-child(2)  { top:28%; right:2%;  animation-delay:-3s;   animation-duration:11s; font-size:22px; }
+.stk:nth-child(3)  { top:55%; left:1.5%; animation-delay:-6s;   animation-duration:8s;  font-size:26px; }
+.stk:nth-child(4)  { top:72%; right:3%;  animation-delay:-2s;   animation-duration:12s; font-size:20px; }
+.stk:nth-child(5)  { top:88%; left:4%;   animation-delay:-5s;   animation-duration:10s; font-size:18px; }
+.stk:nth-child(6)  { top:6%;  right:5%;  animation-delay:-1.5s; animation-duration:13s; font-size:24px; }
+.stk:nth-child(7)  { top:42%; left:2%;   animation-delay:-4s;   animation-duration:9.5s;font-size:30px; }
+.stk:nth-child(8)  { top:65%; right:1%;  animation-delay:-7s;   animation-duration:11s; font-size:22px; }
+@keyframes stk-float {
+  0%,100% { transform: translateY(0) rotate(-6deg) scale(1); }
+  30%      { transform: translateY(-14px) rotate(4deg) scale(1.05); }
+  60%      { transform: translateY(-6px) rotate(-2deg) scale(0.98); }
+}
+
+/* CSS halftone dot grid overlay */
+#halftone {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 1;
+  opacity: 0.035;
+  background-image: radial-gradient(circle, #8060c0 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ══════════════════════════════════════════
+   HERO WINDOW
+══════════════════════════════════════════ */
+.hero-win { grid-column: 1 / -1; position: relative; }
+.hero-inner {
+  padding: 52px 60px 56px;
+  position: relative; overflow: hidden;
+  /* animated gradient wash */
+  background: linear-gradient(135deg,
+    rgba(240,220,255,0.4) 0%,
+    rgba(255,220,235,0.3) 30%,
+    rgba(220,240,255,0.35) 60%,
+    rgba(220,255,235,0.25) 100%);
+  background-size: 300% 300%;
+  animation: hero-wash 12s ease-in-out infinite;
+}
+@keyframes hero-wash {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* pepsi globe */
+.pepsi-globe {
+  position: absolute;
+  right: -70px; top: -70px;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 182deg at 50% 48%,
+    var(--pepsi-r) 0deg,   var(--pepsi-r) 148deg,
+    #fff          148deg,  #fff          166deg,
+    var(--pepsi-b) 166deg, var(--pepsi-b) 360deg
+  );
+  opacity: 0.09;
+  animation: globe-spin 28s linear infinite;
+  filter: blur(1px);
+}
+@keyframes globe-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* ══════════════════════════════════════════
+   BANNER CSS (reused from v1, light-reskinned)
+══════════════════════════════════════════ */
+.banner-tender .b-ring { position:absolute;border-radius:50%;border:1px solid rgba(120,80,180,.12);top:50%;left:50%;transform:translate(-50%,-50%) }
+.banner-tender .b-pupil { position:absolute;width:6%;aspect-ratio:1;border-radius:50%;background:var(--pepsi-b);top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 40px 10px rgba(0,80,180,.2);opacity:.8;animation:pupil-breathe 4s ease-in-out infinite }
+@keyframes pupil-breathe{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.8}50%{transform:translate(-50%,-50%) scale(1.12);opacity:1}}
+.banner-tender .b-iris { position:absolute;width:14%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(0,80,180,.35);top:50%;left:50%;transform:translate(-50%,-50%) }
+.banner-tender .b-slash { position:absolute;width:40%;height:1px;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg) }
+.banner-tender .b-line { position:absolute;left:0;right:0;height:1px }
+
+.banner-spore .b-node { position:absolute;border-radius:50% }
+.banner-spore .b-thread { position:absolute;height:1px;transform-origin:0 50% }
+.banner-spore .b-glow { position:absolute;border-radius:50%;width:40%;aspect-ratio:1;top:30%;left:20% }
+
+.banner-deadcode .b-wave-row { position:absolute;left:0;right:0;display:flex;align-items:center;gap:2px;padding:0 3rem }
+.banner-deadcode .b-bar { flex-shrink:0;border-radius:1px }
+.banner-deadcode .b-char { position:absolute;font-family:var(--mono);font-size:.5rem }
+.banner-deadcode::after { position:absolute;bottom:1.5rem;left:3rem;font-family:var(--mono);font-size:.5rem;letter-spacing:.2em;content:'░ ▒ ▓ █ ▓ ▒ ░ _ ▒ ░ █' }
+
+.banner-ds9000 .b-grid { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:grid;gap:4px }
+.banner-ds9000 .b-cell { border:1px solid;border-radius:2px }
+.banner-ds9000 .b-playhead { position:absolute;top:0;bottom:0;width:1px;animation:ph-move 2.4s steps(16) infinite }
+@keyframes ph-move{from{left:0}to{left:100%}}
+
+.banner-deadstar .b-arc { position:absolute;border-radius:50%;border:1px solid;top:50%;left:50%;transform:translate(-50%,-50%);aspect-ratio:1 }
+.banner-deadstar .b-star-dot { position:absolute;border-radius:50%;animation:star-fade linear infinite }
+@keyframes star-fade{0%{opacity:.9}100%{opacity:0}}
+.banner-deadstar::after { content:'';position:absolute;top:50%;left:50%;width:4px;height:4px;background:#fff;border-radius:50%;transform:translate(-50%,-50%) }
+
+.banner-dropbox .b-monitor { position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);width:52%;aspect-ratio:4/3;border:2px solid;border-radius:8px }
+.banner-dropbox .b-screen { position:absolute;inset:8%;border:1px solid;border-radius:3px;overflow:hidden }
+.banner-dropbox .b-scanline { position:absolute;left:0;right:0;height:1px;animation:scan 3s linear infinite }
+@keyframes scan{from{top:0}to{top:100%}}
+.banner-dropbox .b-cursor { position:absolute;bottom:25%;left:15%;font-family:var(--mono);font-size:.55rem;animation:blink-c .9s step-end infinite }
+@keyframes blink-c{0%,100%{opacity:1}50%{opacity:0}}
+.banner-dropbox .b-slot { position:absolute;bottom:0;left:50%;transform:translate(-50%,0);width:35%;height:4px;border-radius:2px 2px 0 0 }
+.banner-dropbox .b-stand { position:absolute;bottom:-15%;left:50%;transform:translateX(-50%);width:20%;height:12%;border:2px solid;border-top:none;border-radius:0 0 4px 4px }
+
+.banner-chromasynth .b-bar-row { position:absolute;bottom:20%;left:0;right:0;display:flex;align-items:flex-end;justify-content:center;gap:3px;padding:0 4rem;height:55% }
+.banner-chromasynth .b-cbar { border-radius:2px 2px 0 0;flex:1;max-width:18px }
+
+.banner-flora .b-circle { position:absolute;border-radius:50%;border:1px solid;opacity:.4;aspect-ratio:1 }
+
+.banner-seance .b-module { position:absolute;border:1px solid;border-radius:2px }
+.banner-seance .b-cable { position:absolute;border-radius:50%;border-bottom:1.5px solid }
+
+.banner-gravedigging .b-stone { position:absolute;border:1px solid;border-radius:40% 40% 0 0 }
+.banner-gravedigging .b-cross { position:absolute }
+.banner-gravedigging .b-cross::before,.banner-gravedigging .b-cross::after { content:'';position:absolute }
+.banner-gravedigging .b-cross::before { width:1px;height:100%;left:50%;transform:translateX(-50%) }
+.banner-gravedigging .b-cross::after { height:1px;width:70%;top:30%;left:15% }
+.banner-gravedigging .b-ground { position:absolute;bottom:0;left:0;right:0;height:28%;border-top:1px solid }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media(max-width:720px){
+  .home-layout,.work-layout,.games-layout,.contact-layout,.proj-detail-layout{padding:12px 16px 60px;gap:14px}
+  .home-layout{grid-template-columns:1fr}
+  .hero-inner,.proj-title-inner,.contact-hero-inner{padding:28px 24px 32px}
+  .about-layout{grid-template-columns:1fr;padding:12px 16px 60px}
+  .proj-body-inner{grid-template-columns:1fr;gap:24px}
+  .proj-next-inner{flex-direction:column;gap:8px}
+  #nav{top:8px;padding:5px 8px}
+  .nav-links a{padding:4px 10px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="cursor"></canvas>
+<div id="vhs-stripe"></div>
+
+<!-- animated mesh gradient -->
+<canvas id="mesh"></canvas>
+
+<!-- halftone dot grid -->
+<div id="halftone"></div>
+
+<!-- floating stickers -->
+<div id="stickers" aria-hidden="true">
+  <span class="stk">✿</span>
+  <span class="stk">❀</span>
+  <span class="stk">✾</span>
+  <span class="stk">❋</span>
+  <span class="stk">✿</span>
+  <span class="stk">❀</span>
+  <span class="stk">✦</span>
+  <span class="stk">✿</span>
+</div>
+
+<!-- NAV pill -->
+<nav id="nav">
+  <a class="nav-logo" href="#" data-page="home">SVDE</a>
+  <div class="nav-sep"></div>
+  <div class="nav-links">
+    <a href="#" data-page="work">Work</a>
+    <a href="#" data-page="games">Games</a>
+    <a href="#" data-page="boards">Boards</a>
+    <a href="#" data-page="blog">Blog</a>
+    <a href="#" data-page="now">Now</a>
+    <a href="#" data-page="concepts">Concepts</a>
+    <a href="#" data-page="log">Log</a>
+    <a href="#" data-page="about">About</a>
+    <a href="#" data-page="contact">Contact</a>
+  </div>
+</nav>
+
+<!-- ══ HOME ══ -->
+<div class="page active" id="page-home">
+<div class="page-wrap">
+<div class="home-layout">
+
+  <!-- hero window -->
+  <div class="win hero-win reveal">
+    <div class="win-bar">
+      <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+      <span class="win-title">SVDE.app</span>
+    </div>
+    <div class="hero-inner">
+      <div class="pepsi-globe"></div>
+      <div class="hero-eyebrow">Sade Black / They · Them</div>
+      <div class="hero-name"><span class="sk">S</span><span class="ol">V</span><span class="italic ig">D</span><span class="outline rb">E</span></div>
+      <p class="hero-tagline">building things that <em>behave</em> like they're alive —<br>or like they were once.</p>
+      <div class="hero-pills">
+        <span class="pill pill-lav">Creative Technologist</span>
+        <span class="pill pill-mint">Audio · DSP</span>
+        <span class="pill pill-peach">Horror Games</span>
+        <span class="pill pill-blue">Web · Code</span>
+        <span class="pill pill-rose">California</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ticker window -->
+  <div class="win ticker-win reveal" style="animation-delay:.05s">
+    <div class="win-bar">
+      <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+      <span class="win-title">now building ✿</span>
+    </div>
+    <div class="ticker-inner-wrap" style="padding:14px 20px">
+      <span class="ticker-label">ACTIVE</span>
+      <div class="ticker-track">
+        <div class="ticker-scroll">
+          <span>TENDER — look-aversion horror game</span>
+          <span>SPORE v0.2 — post threading + Spaces</span>
+          <span>Dead Star VST — per-partial decay synthesis</span>
+          <span>DEAD.CODE — AUTOPSY mode</span>
+          <span>TENDER — look-aversion horror game</span>
+          <span>SPORE v0.2 — post threading + Spaces</span>
+          <span>Dead Star VST — per-partial decay synthesis</span>
+          <span>DEAD.CODE — AUTOPSY mode</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- sidebar -->
+  <div class="win sidebar-win reveal" style="animation-delay:.08s">
+    <div class="win-bar">
+      <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+      <span class="win-title">status.txt</span>
+    </div>
+    <div class="sidebar-inner">
+      <div class="sidebar-row">
+        <span class="sidebar-key">HANDLE</span>
+        <span class="sidebar-val">SVDE / svdeblk</span>
+      </div>
+      <div class="sidebar-row">
+        <span class="sidebar-key">LOCATION</span>
+        <span class="sidebar-val">California</span>
+      </div>
+      <div class="sidebar-row">
+        <span class="sidebar-key">STATUS</span>
+        <span class="sidebar-val active-pill"><span class="live-dot"></span>Available for collab</span>
+      </div>
+      <div class="sidebar-row">
+        <span class="sidebar-key">PLATFORM</span>
+        <span class="sidebar-val"><a href="https://spore.bond" style="color:var(--pepsi-b);text-decoration:none;cursor:none">spore.bond</a></span>
+      </div>
+      <div class="sidebar-row">
+        <span class="sidebar-key">FOCUS</span>
+        <span class="sidebar-val">Horror · Audio · Web</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- project list window -->
+  <div class="win list-win reveal" style="animation-delay:.1s">
+    <div class="win-bar">
+      <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+      <span class="win-title">projects ✿</span>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="game">Game</button>
+      <button class="filter-btn" data-filter="audio">Audio</button>
+      <button class="filter-btn" data-filter="tool">Tool</button>
+      <button class="filter-btn" data-filter="platform">Platform</button>
+      <button class="filter-btn" data-filter="web">Web</button>
+    </div>
+
+    <ul class="proj-list" id="home-list">
+      <li class="reveal" data-cat="game"><a class="proj-row" href="#" data-page="project" data-project="tender"><span class="proj-num">01</span><span class="proj-name">TENDER</span><span class="proj-cat cat-game">Game</span><span class="proj-year">2026</span></a></li>
+      <li class="reveal" data-cat="platform"><a class="proj-row" href="#" data-page="project" data-project="spore"><span class="proj-num">02</span><span class="proj-name">SPORE</span><span class="proj-cat cat-platform">Platform</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="dead-code"><span class="proj-num">03</span><span class="proj-name">DEAD.CODE</span><span class="proj-cat cat-tool">Tool</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="ds9000"><span class="proj-num">04</span><span class="proj-name">DS-9000</span><span class="proj-cat cat-tool">Tool</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="audio"><a class="proj-row" href="#" data-page="project" data-project="dead-star"><span class="proj-num">05</span><span class="proj-name">Dead Star</span><span class="proj-cat cat-audio">Audio</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="web"><a class="proj-row" href="#" data-page="project" data-project="dropbox"><span class="proj-num">06</span><span class="proj-name">DROPBOX</span><span class="proj-cat cat-web">Web</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="audio"><a class="proj-row" href="#" data-page="project" data-project="chromasynth"><span class="proj-num">07</span><span class="proj-name">CHROMASYNTH</span><span class="proj-cat cat-audio">Audio</span><span class="proj-year">2024</span></a></li>
+      <li class="reveal" data-cat="audio"><a class="proj-row" href="#" data-page="project" data-project="flora"><span class="proj-num">08</span><span class="proj-name">FLORA / FAUNA / FUNGA</span><span class="proj-cat cat-audio">Audio</span><span class="proj-year">2024</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="seance"><span class="proj-num">09</span><span class="proj-name">SÉANCE MACHINE</span><span class="proj-cat cat-tool">Tool</span><span class="proj-year">2024</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="gravedigging"><span class="proj-num">10</span><span class="proj-name">GRAVEDIGGING</span><span class="proj-cat cat-tool">Tool</span><span class="proj-year">2024</span></a></li>
+    </ul>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- ══ WORK ══ -->
+<div class="page" id="page-work">
+<div class="page-wrap">
+<div class="work-layout">
+  <div class="win page-hdr-win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">work</span></div>
+    <div class="page-hdr-inner"><h1 class="page-hdr-title">Work</h1></div>
+  </div>
+  <div class="win reveal" style="animation-delay:.06s">
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="game">Game</button>
+      <button class="filter-btn" data-filter="audio">Audio</button>
+      <button class="filter-btn" data-filter="tool">Tool</button>
+      <button class="filter-btn" data-filter="platform">Platform</button>
+      <button class="filter-btn" data-filter="web">Web</button>
+    </div>
+    <ul class="proj-list project-grid">
+      <li class="reveal" data-cat="game"><a class="proj-row" href="#" data-page="project" data-project="tender"><span class="proj-num">01</span><span class="proj-name">TENDER</span><span class="proj-cat cat-game">Godot · Horror</span><span class="proj-year">2026</span></a></li>
+      <li class="reveal" data-cat="platform"><a class="proj-row" href="#" data-page="project" data-project="spore"><span class="proj-num">02</span><span class="proj-name">SPORE</span><span class="proj-cat cat-platform">Node.js · Federated</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="dead-code"><span class="proj-num">03</span><span class="proj-name">DEAD.CODE</span><span class="proj-cat cat-tool">Web Audio · DSL</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="ds9000"><span class="proj-num">04</span><span class="proj-name">DS-9000</span><span class="proj-cat cat-tool">Sequencer · Web</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="audio"><a class="proj-row" href="#" data-page="project" data-project="dead-star"><span class="proj-num">05</span><span class="proj-name">Dead Star</span><span class="proj-cat cat-audio">VST · Synthesis</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="web"><a class="proj-row" href="#" data-page="project" data-project="dropbox"><span class="proj-num">06</span><span class="proj-name">DROPBOX</span><span class="proj-cat cat-web">VHS · Retro OS</span><span class="proj-year">2025</span></a></li>
+      <li class="reveal" data-cat="audio"><a class="proj-row" href="#" data-page="project" data-project="chromasynth"><span class="proj-num">07</span><span class="proj-name">CHROMASYNTH</span><span class="proj-cat cat-audio">Visualizer · Audio</span><span class="proj-year">2024</span></a></li>
+      <li class="reveal" data-cat="audio"><a class="proj-row" href="#" data-page="project" data-project="flora"><span class="proj-num">08</span><span class="proj-name">FLORA / FAUNA / FUNGA</span><span class="proj-cat cat-audio">Synth Trio</span><span class="proj-year">2024</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="seance"><span class="proj-num">09</span><span class="proj-name">SÉANCE MACHINE</span><span class="proj-cat cat-tool">Modular · Web</span><span class="proj-year">2024</span></a></li>
+      <li class="reveal" data-cat="tool"><a class="proj-row" href="#" data-page="project" data-project="gravedigging"><span class="proj-num">10</span><span class="proj-name">GRAVEDIGGING</span><span class="proj-cat cat-tool">File Explorer</span><span class="proj-year">2024</span></a></li>
+    </ul>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ GAMES ══ -->
+<div class="page" id="page-games">
+<div class="page-wrap">
+<div class="games-layout">
+  <div class="win reveal"><div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">micro horror — itch.io</span></div>
+    <div class="micro-grid">
+      <div class="micro-card reveal"><div class="mgc-name">WELL</div><div class="mgc-year">2024</div><p class="mgc-desc">you look down. something looks back. the rope gets shorter.</p><span class="mgc-badge">itch.io</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">REFLECTION</div><div class="mgc-year">2024</div><p class="mgc-desc">the mirror is always one frame behind. until it isn't.</p><span class="mgc-badge">itch.io</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">ECHO</div><div class="mgc-year">2024</div><p class="mgc-desc">audio-first horror. your voice comes back wrong.</p><span class="mgc-badge">itch.io</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">HURT</div><div class="mgc-year">2023</div><p class="mgc-desc">a game about damage that doesn't show where you expect it.</p><span class="mgc-badge">itch.io</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">Night Shift</div><div class="mgc-year">2023</div><p class="mgc-desc">close the tabs. don't open the wrong one. work is almost done.</p><span class="mgc-badge">itch.io</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">STUTTER</div><div class="mgc-year">—</div><p class="mgc-desc">the frame repeats. you're the only one who notices.</p><span class="mgc-badge concept">Concept</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">PULSE</div><div class="mgc-year">—</div><p class="mgc-desc">biometric horror. something is measuring you back.</p><span class="mgc-badge concept">Concept</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">FEED</div><div class="mgc-year">—</div><p class="mgc-desc">a social feed that slowly becomes yours alone.</p><span class="mgc-badge concept">Concept</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">DEPTH</div><div class="mgc-year">—</div><p class="mgc-desc">thalassophobia in negative space and low-frequency dread.</p><span class="mgc-badge concept">Concept</span></div>
+      <div class="micro-card reveal"><div class="mgc-name">THRESHOLD</div><div class="mgc-year">—</div><p class="mgc-desc">a door that opens once. the game begins the second time.</p><span class="mgc-badge concept">Concept</span></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ PROJECT DETAIL ══ -->
+<div class="page" id="page-project">
+<div class="page-wrap" id="project-content"></div>
+</div>
+
+<!-- ══ ABOUT ══ -->
+<div class="page" id="page-about">
+<div class="page-wrap">
+<div class="about-layout">
+  <div class="win about-win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">about.txt</span></div>
+    <div class="about-inner">
+      <p class="about-pull">every project starts as a proof of concept.<br>most of them <em>refuse to stay that way.</em></p>
+      <div class="about-text">
+        <p>Sade Black (they/them) is a multidisciplinary creative technologist working independently. the practice spans music production, audio tool development, horror game design, and experimental web development.</p>
+        <p>operating under the handle SVDE and svdeblk. based in California.</p>
+        <p>recurring obsessions: Web Audio API as DSP layer. single-file portable HTML artifacts as a build philosophy. procedural generation. horror as a design system. glitch and corruption as interactive mechanics.</p>
+        <p>the work doesn't separate aesthetics from engineering — the feeling of a thing is part of its specification.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="win reveal" style="animation-delay:.06s">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">tools.txt</span></div>
+    <div class="about-inner">
+      <p class="tools-label">Tools &amp; Technologies</p>
+      <ul class="tools-list">
+        <li><span>Godot 4 / GDScript</span><span class="tool-cat" style="background:var(--lav2);color:#6040a0">Game Engine</span></li>
+        <li><span>Web Audio API</span><span class="tool-cat" style="background:var(--mint2);color:#205040">DSP</span></li>
+        <li><span>Max for Live</span><span class="tool-cat" style="background:var(--mint2);color:#205040">Audio</span></li>
+        <li><span>Ableton Live</span><span class="tool-cat" style="background:var(--mint2);color:#205040">DAW</span></li>
+        <li><span>Node.js</span><span class="tool-cat" style="background:var(--blue2);color:#003080">Backend</span></li>
+        <li><span>Python</span><span class="tool-cat" style="background:var(--peach2);color:#803020">Prototyping</span></li>
+        <li><span>HTML / CSS / JS</span><span class="tool-cat" style="background:var(--rose2);color:#802050">Frontend</span></li>
+        <li><span>Cloudflare / Render</span><span class="tool-cat" style="background:var(--blue2);color:#003080">Infra</span></li>
+        <li><span>Canvas 2D / WebGL</span><span class="tool-cat" style="background:var(--lav2);color:#6040a0">Graphics</span></li>
+        <li><span>Tauri / Rust</span><span class="tool-cat" style="background:var(--peach2);color:#803020">Desktop</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="river-wrap reveal" style="animation-delay:.1s">
+    <span class="river-text" aria-hidden="true">Godot &nbsp;&nbsp; Web Audio &nbsp;&nbsp; Max for Live &nbsp;&nbsp; Python &nbsp;&nbsp; Node.js &nbsp;&nbsp; GDScript &nbsp;&nbsp; Canvas 2D &nbsp;&nbsp; SQLite &nbsp;&nbsp; Tauri &nbsp;&nbsp; Notion &nbsp;&nbsp; Godot &nbsp;&nbsp; Web Audio &nbsp;&nbsp; Max for Live &nbsp;&nbsp; Python &nbsp;&nbsp; Node.js &nbsp;&nbsp; GDScript &nbsp;&nbsp; Canvas 2D &nbsp;&nbsp; SQLite &nbsp;&nbsp; Tauri &nbsp;&nbsp; Notion &nbsp;&nbsp;</span>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ CONTACT ══ -->
+<div class="page" id="page-contact">
+<div class="page-wrap">
+<div class="contact-layout">
+  <div class="win contact-hero-win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">contact ✿</span></div>
+    <div class="contact-hero-inner">
+      <div class="pepsi-globe"></div>
+      <div class="contact-words">
+        <span class="contact-word fill">Get</span>
+        <span class="contact-word blend">In</span>
+        <span class="contact-word outline">Touch</span>
+      </div>
+    </div>
+  </div>
+  <div class="win contact-links-win reveal" style="animation-delay:.07s">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">links.txt</span></div>
+    <div class="contact-links-inner">
+      <div class="cli"><span class="cli-label">Email</span><a class="cli-val" href="mailto:hello@svde.rip">hello@svde.rip</a></div>
+      <div class="cli"><span class="cli-label">GitHub</span><a class="cli-val" href="https://github.com/svdeblk" target="_blank" rel="noopener">svdeblk</a></div>
+      <div class="cli"><span class="cli-label">Platform</span><a class="cli-val" href="https://spore.bond" target="_blank" rel="noopener">spore.bond</a></div>
+      <div class="cli"><span class="cli-label">Itch.io</span><a class="cli-val" href="https://svdeblk.itch.io" target="_blank" rel="noopener">svdeblk</a></div>
+      <div class="cli"><span class="cli-label">Location</span><span class="cli-val" style="cursor:default">California</span></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ LOADING SCREEN ══ -->
+<div id="page-loader">
+  <div class="win loader-win">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">svde.rip</span></div>
+    <div class="loader-inner">
+      <div class="loader-eyebrow">loading</div>
+      <div class="loader-name">SVDE</div>
+      <div class="loader-bar-wrap"><div id="loader-bar"></div></div>
+      <div class="loader-status" id="loader-status">initializing...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BLOG ══ -->
+<div class="page" id="page-blog">
+<div class="page-wrap">
+<div class="blog-layout">
+  <div class="win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">the open files</span></div>
+    <div class="page-hdr-inner"><h1 class="page-hdr-title">The Open Files</h1></div>
+  </div>
+  <div id="blog-index" class="win reveal" style="animation-delay:.06s">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">entries</span></div>
+    <ul class="proj-list" id="blog-list"></ul>
+  </div>
+  <div id="blog-post-win" class="win reveal" style="display:none">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title" id="blog-post-win-title">post</span></div>
+    <div id="blog-post-content" class="blog-post-inner"></div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ BOARD GAMES ══ -->
+<div class="page" id="page-boards">
+<div class="page-wrap">
+<div class="work-layout">
+  <div class="win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">board game concepts</span></div>
+    <div class="page-hdr-inner"><h1 class="page-hdr-title">Boards</h1></div>
+  </div>
+  <div class="win reveal" style="animation-delay:.06s">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">five fully designed horror concepts ✿</span></div>
+    <div class="boards-grid">
+      <div class="board-card reveal">
+        <div class="board-num">01</div>
+        <div class="board-name">THE STATIC CHAPEL</div>
+        <div class="board-tag">cooperative · 3–5 players · 90 min</div>
+        <p class="board-desc">players are trapped in a liminal broadcast station. the signal is degrading. something is in the static. they must reconstruct the original broadcast before the chapel fully manifests around them. mechanics: frequency tuning, signal overlap, cooperative decryption.</p>
+      </div>
+      <div class="board-card reveal">
+        <div class="board-num">02</div>
+        <div class="board-name">CORDYCEPTION</div>
+        <div class="board-tag">hidden role · 4–6 players · 60 min</div>
+        <p class="board-desc">one or more players are already infected. the infection spreads through actions, not information. you don't know you're infected until the spore count tips. body horror as social deduction. the infected don't play differently — they just optimize for the wrong thing.</p>
+      </div>
+      <div class="board-card reveal">
+        <div class="board-num">03</div>
+        <div class="board-name">THE LAST SESSION</div>
+        <div class="board-tag">narrative · 2–4 players · 2 hr</div>
+        <p class="board-desc">a tabletop RPG session that begins normally and ends wrong. players receive session notes, character sheets, and a premise. the GM role rotates. halfway through, something in the fiction starts bleeding. a game about the membrane between the table and the story.</p>
+      </div>
+      <div class="board-card reveal">
+        <div class="board-num">04</div>
+        <div class="board-name">DEAD FREQUENCY</div>
+        <div class="board-tag">asymmetric · 2–5 players · 45 min</div>
+        <p class="board-desc">one player is the signal. the others are listeners. the signal player communicates only through a constrained channel — symbols, sounds, patterns — and the listeners must decode the message before the frequency dies. the signal doesn't know it's dying.</p>
+      </div>
+      <div class="board-card reveal">
+        <div class="board-num">05</div>
+        <div class="board-name">THE UNDERWOOD</div>
+        <div class="board-tag">solo/cooperative · 1–3 players · 3 hr</div>
+        <p class="board-desc">a survival game set in a forest that knows you're in it. the map shifts. landmarks remember being visited. players must navigate using accumulated trail knowledge, not a fixed board. the forest isn't hostile — it's curious. the horror is being something it hasn't seen before.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ NOW ══ -->
+<div class="page" id="page-now">
+<div class="page-wrap">
+<div class="now-layout">
+  <div class="win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">now.txt — last updated manually</span></div>
+    <div class="now-inner">
+      <div class="now-eyebrow">what i'm doing right now</div>
+      <div class="now-grid">
+        <div class="now-block">
+          <div class="now-label">building</div>
+          <div class="now-val">TENDER — godot 4.x. peripheral horror. the entity has been in the room this whole time.</div>
+        </div>
+        <div class="now-block">
+          <div class="now-label">also building</div>
+          <div class="now-val">SPORE v0.2 — post threading, Spaces, long-form pages. the woodwide web grows.</div>
+        </div>
+        <div class="now-block">
+          <div class="now-label">thinking about</div>
+          <div class="now-val">DSP as horror language. what it means for a sound to have a lifespan. the Dead Star VST spec keeps getting longer.</div>
+        </div>
+        <div class="now-block">
+          <div class="now-label">listening to</div>
+          <div class="now-val">late night experimental. things with too much space in them. music that sounds like it's waiting.</div>
+        </div>
+        <div class="now-block">
+          <div class="now-label">reading</div>
+          <div class="now-val">scattered. design theory, horror criticism, mycelium biology papers i only half understand.</div>
+        </div>
+        <div class="now-block">
+          <div class="now-label">location</div>
+          <div class="now-val">California. the part nobody drives through.</div>
+        </div>
+        <div class="now-block">
+          <div class="now-label">status</div>
+          <div class="now-val"><span class="live-dot" style="display:inline-block;margin-right:6px"></span>open to collaboration and commissions. slow to reply. worth the wait hopefully.</div>
+        </div>
+        <div class="now-block">
+          <div class="now-label">this page</div>
+          <div class="now-val">inspired by nownownow.com. updated whenever something meaningfully shifts.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ CONCEPTS ══ -->
+<div class="page" id="page-concepts">
+<div class="page-wrap">
+<div class="work-layout">
+  <div class="win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">concepts.vault</span></div>
+    <div class="page-hdr-inner" style="padding-bottom:8px"><h1 class="page-hdr-title">Concepts</h1>
+    <p style="font-size:12px;color:var(--ink3);font-family:var(--mono);letter-spacing:.1em;margin-top:8px">things that exist in the idea space. named, partially specced, not shipped. may become real.</p></div>
+  </div>
+  <div class="win reveal" style="animation-delay:.06s">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">unfinished things ✿</span></div>
+    <ul class="proj-list concepts-list">
+      <li class="reveal"><div class="concept-row"><span class="concept-name">BODY HORROR VST FAMILY</span><span class="concept-tag">audio</span><span class="concept-desc">HUNGER, BLOAT, EXSANGUINATE, TREMOR — biological horror as signal processing. full mechanical spec written. build pending.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">FLORA / FAUNA / FUNGA</span><span class="concept-tag">audio</span><span class="concept-desc">three interconnected synth plugins. FUNGA routes signals between the other two. mycorrhizal network as patch bay.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">PATCH.MEMORY</span><span class="concept-tag">tool</span><span class="concept-desc">git-for-synth-presets browser app. version control for sound. notion integration. the history of a patch as a document.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">GLITCH.SYNTH</span><span class="concept-tag">audio</span><span class="concept-desc">FM synthesizer where each key has its own glitch personality. procedural word-patch generation. the patch name is part of the sound.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">SIGNAL ROOM</span><span class="concept-tag">tool</span><span class="concept-desc">unified project dashboard for SVDE's entire build environment. single window, all contexts. still theoretical.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">OXIDE PRINTS</span><span class="concept-tag">web</span><span class="concept-desc">VHS tape zine tooling. editorial horror angle. making physical-feeling digital artifacts for distribution.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">AUDIO AUDIT</span><span class="concept-tag">tool</span><span class="concept-desc">an AI artifact removal tool for AI-generated music. separating the machine residue from the signal. not conceptually complete yet.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">GENERATIVE ASCII ENGINE</span><span class="concept-tag">art</span><span class="concept-desc">procedural visual/audio system. characters as both image and sonic trigger. the text is the interface.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">MICRO HORROR CATALOG (UNRELEASED)</span><span class="concept-tag">game</span><span class="concept-desc">STUTTER, PULSE, FEED, DEPTH, THRESHOLD, AUDIT, FRAGMENTS, SIGNAL — eight more. all designed, none shipped yet.</span></div></li>
+      <li class="reveal"><div class="concept-row"><span class="concept-name">FORGEJO / GIT FORGE</span><span class="concept-tag">infra</span><span class="concept-desc">self-hosted via orbstack. structured context source. MCP integration planned. the version control layer for everything.</span></div></li>
+    </ul>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ DEVLOG ══ -->
+<div class="page" id="page-log">
+<div class="page-wrap">
+<div class="work-layout">
+  <div class="win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">build.log</span></div>
+    <div class="page-hdr-inner" style="padding-bottom:8px"><h1 class="page-hdr-title">Log</h1>
+    <p style="font-size:12px;color:var(--ink3);font-family:var(--mono);letter-spacing:.1em;margin-top:8px">build diary. timestamped. no neat summaries.</p></div>
+  </div>
+  <div class="win reveal" style="animation-delay:.06s">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">entries</span></div>
+    <div class="log-entries">
+      <div class="log-entry reveal">
+        <div class="log-meta"><span class="log-date">2026-04-23</span><span class="log-tag">TENDER</span></div>
+        <p class="log-body">got the peripheral detection working. the entity now correctly registers as "seen" when the camera's forward vector comes within 18° of its position. the ever_looked boolean flips and stays flipped. tested the third ending — the one where you never look — and the room feels completely different when you're maintaining it intentionally vs accidentally. that's the game.</p>
+      </div>
+      <div class="log-entry reveal">
+        <div class="log-meta"><span class="log-date">2026-04-18</span><span class="log-tag">SPORE</span></div>
+        <p class="log-body">shipped post threading to v0.2 staging. the substrate/matter vocabulary is holding up better than expected. a thread feels different from a reply feels different from a standalone post in ways i didn't fully spec. the federation model is making me think about what "conversation" means when there's no algorithm deciding what you see.</p>
+      </div>
+      <div class="log-entry reveal">
+        <div class="log-meta"><span class="log-date">2026-04-12</span><span class="log-tag">DEAD.CODE</span></div>
+        <p class="log-body">AUTOPSY mode is partially working. the internal state of a dying sequence is now externalizable as a canvas visualization. watching gravelang sequences decay in real time is exactly as uncomfortable as intended. each mode (NECROMANCY / DECAY / ENTROPY) now has a distinct failure texture. ENTROPY feels the most honest.</p>
+      </div>
+      <div class="log-entry reveal">
+        <div class="log-meta"><span class="log-date">2026-04-08</span><span class="log-tag">DEAD STAR</span></div>
+        <p class="log-body">revised the partial lifespan countdown spec. originally each partial had a fixed timer. now they age at different rates based on frequency register — high partials die faster, low ones persist. this was not planned. it emerged from testing and immediately sounded more right. the math is in the notes. the feeling is: inevitable.</p>
+      </div>
+      <div class="log-entry reveal">
+        <div class="log-meta"><span class="log-date">2026-04-02</span><span class="log-tag">META</span></div>
+        <p class="log-body">spent three hours migrating the idea inventory. 297+ concepts now in the notion DB with proper relational structure. the ideas that seemed half-formed when i wrote them are actually more complete than i thought. the ones i thought were solid are stranger than i remembered. the catalog is its own kind of artifact.</p>
+      </div>
+      <div class="log-entry reveal">
+        <div class="log-meta"><span class="log-date">2026-03-28</span><span class="log-tag">BOARDS</span></div>
+        <p class="log-body">finished the full design doc for THE UNDERWOOD. the mechanic where the forest "remembers" visited landmarks required a second tile layer i hadn't planned for. it works now. playtested solo — the game correctly made me feel observed. not threatened. just. watched.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ AMBIENT AUDIO TOGGLE ══ -->
+<button id="audio-toggle" title="toggle ambient audio" aria-label="toggle ambient audio">
+  <span id="audio-icon">♪</span>
+</button>
+
+<!-- ══ KONAMI EASTER EGG OVERLAY ══ -->
+<div id="konami-overlay" aria-hidden="true">
+  <div class="konami-inner">
+    <div class="konami-word" id="konami-word">SOLVE</div>
+    <div class="konami-sub">↑↑↓↓←→←→BA</div>
+  </div>
+</div>
+
+<!-- ══ 404 WINDOW ══ -->
+<div class="page" id="page-404">
+<div class="page-wrap">
+<div class="now-layout">
+  <div class="win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">error — page not found</span></div>
+    <div class="now-inner" style="text-align:center;padding:80px 40px">
+      <div class="page-hdr-title" style="font-size:clamp(60px,12vw,160px);-webkit-text-stroke:1px rgba(60,30,100,.15);margin-bottom:24px">404</div>
+      <p style="font-family:var(--serif);font-style:italic;font-size:clamp(1rem,2vw,1.4rem);color:var(--ink2);max-width:40ch;margin:0 auto 32px">you have wandered somewhere that does not exist. the hallway continues but the doors have stopped.</p>
+      <a href="#" data-page="home" class="pill pill-lav" style="text-decoration:none;font-size:12px;cursor:none">← return to entrance</a>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<style>
+/* ══════════ LOADING SCREEN ══════════ */
+#page-loader {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #f7f3ff;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .6s cubic-bezier(.16,1,.3,1);
+}
+#page-loader.fade-out { opacity: 0; pointer-events: none; }
+.loader-win { width: min(420px, 90vw); }
+.loader-inner {
+  padding: 40px 44px 48px;
+  background: linear-gradient(135deg, rgba(230,215,255,.4) 0%, rgba(255,215,235,.3) 100%);
+}
+.loader-eyebrow {
+  font-family: var(--mono); font-size: 14px; letter-spacing: .2em;
+  color: var(--ink3); text-transform: uppercase; margin-bottom: 8px;
+}
+.loader-name {
+  font-family: var(--serif); font-weight: 700;
+  font-size: 64px; line-height: 1; letter-spacing: -.02em;
+  color: var(--ink);
+  text-shadow: -2px 0 var(--pepsi-r), 2px 0 rgba(168,212,240,.6);
+  margin-bottom: 32px;
+}
+.loader-bar-wrap {
+  height: 3px; background: rgba(120,80,180,.1);
+  border-radius: 2px; overflow: hidden; margin-bottom: 12px;
+}
+#loader-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--pepsi-b), var(--pepsi-r));
+  border-radius: 2px;
+  transition: width .35s ease;
+}
+.loader-status {
+  font-family: var(--mono); font-size: 13px;
+  color: var(--ink3); letter-spacing: .1em;
+}
+
+/* ══════════ BLOG ══════════ */
+.blog-layout {
+  max-width: 860px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.blog-post-inner { padding: 32px 40px; }
+.blog-post-back {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--ink3); background: none;
+  border: none; cursor: none; margin-bottom: 28px; display: block;
+  transition: color .15s;
+}
+.blog-post-back::before { content: '← '; color: var(--pepsi-b); }
+.blog-post-back:hover { color: var(--ink); }
+.blog-post-date {
+  font-family: var(--mono); font-size: 13px; letter-spacing: .12em;
+  color: var(--ink3); margin-bottom: 12px; text-transform: uppercase;
+}
+.blog-post-title {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(2rem,5vw,4rem); line-height: .95;
+  letter-spacing: -.02em; color: var(--ink);
+  margin-bottom: 20px;
+}
+.blog-post-tags { display: flex; gap: 6px; margin-bottom: 32px; flex-wrap: wrap; }
+.blog-post-tag {
+  font-size: 10px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 100px;
+  background: var(--lav2); color: #6040a0;
+}
+.blog-post-body {
+  font-family: var(--serif); font-style: italic;
+  font-size: clamp(.95rem,1.5vw,1.15rem); line-height: 1.95;
+  color: var(--ink2);
+}
+.blog-post-body p { margin-bottom: 1.4em; }
+
+/* blog list row */
+.blog-row {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: center; gap: 16px;
+  padding: 20px 28px; cursor: none;
+  text-decoration: none; color: inherit;
+  transition: background .18s; position: relative; overflow: hidden;
+}
+.blog-row::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--rose), var(--pepsi-r));
+  transform: scaleY(0); transform-origin: center;
+  transition: transform .25s cubic-bezier(.16,1,.3,1);
+}
+.blog-row:hover { background: rgba(240,168,200,.08); }
+.blog-row:hover::before { transform: scaleY(1); }
+.blog-row:hover .blog-row-title { color: var(--ink); }
+.blog-row-title {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(1.2rem,2vw,1.8rem); line-height: 1.1;
+  color: var(--ink); letter-spacing: -.01em;
+  transition: color .18s;
+}
+.blog-row-meta {
+  font-family: var(--mono); font-size: 12px;
+  letter-spacing: .08em; color: var(--ink3);
+  text-align: right; white-space: nowrap;
+}
+.blog-row-excerpt {
+  font-size: 12px; color: var(--ink2); line-height: 1.6;
+  margin-top: 4px; max-width: 60ch;
+  grid-column: 1 / -1;
+}
+
+/* ══════════ BOARD GAMES ══════════ */
+.boards-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.board-card {
+  padding: 28px 32px;
+  border-bottom: 1px solid rgba(120,80,180,.07);
+  border-right: 1px solid rgba(120,80,180,.07);
+  transition: background .18s; cursor: default;
+}
+.board-card:nth-child(2n) { border-right: none; }
+.board-card:nth-child(n+4) { border-bottom: none; }
+.board-card:last-child { grid-column: 1 / -1; border-right: none; }
+.board-card:hover { background: rgba(212,200,240,.08); }
+.board-num {
+  font-family: var(--mono); font-size: 13px; letter-spacing: .15em;
+  color: var(--ink3); opacity: .4; margin-bottom: 6px;
+}
+.board-name {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(1.2rem,2vw,1.8rem); line-height: 1; letter-spacing: -.01em;
+  color: var(--ink); margin-bottom: 6px;
+}
+.board-tag {
+  font-size: 10px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink3);
+  background: var(--lav2); padding: 2px 10px; border-radius: 100px;
+  display: inline-block; margin-bottom: 12px;
+}
+.board-desc {
+  font-size: 12px; line-height: 1.75; color: var(--ink2);
+}
+
+/* ══════════ NOW ══════════ */
+.now-layout {
+  max-width: 760px; margin: 0 auto;
+  padding: 24px 32px 80px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.now-inner { padding: 32px 40px; }
+.now-eyebrow {
+  font-family: var(--mono); font-size: 13px; letter-spacing: .2em;
+  color: var(--ink3); text-transform: uppercase; margin-bottom: 32px;
+}
+.now-grid { display: flex; flex-direction: column; gap: 0; }
+.now-block {
+  display: grid; grid-template-columns: 140px 1fr;
+  gap: 16px; padding: 14px 0;
+  border-bottom: 1px solid rgba(120,80,180,.07);
+  align-items: baseline;
+}
+.now-block:last-child { border-bottom: none; }
+.now-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--ink3);
+}
+.now-val { font-size: 13px; color: var(--ink2); line-height: 1.7; }
+
+/* ══════════ CONCEPTS ══════════ */
+.concept-row {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 12px; padding: 18px 28px;
+  align-items: start; flex-wrap: wrap;
+}
+.concept-name {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(1rem,1.8vw,1.4rem); color: var(--ink);
+  line-height: 1; grid-column: 1; margin-bottom: 6px;
+  display: block;
+}
+.concept-tag {
+  font-size: 9px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 100px;
+  background: var(--peach2); color: #803020;
+  white-space: nowrap; align-self: start;
+}
+.concept-desc {
+  font-size: 12px; color: var(--ink2); line-height: 1.7;
+  grid-column: 1 / -1; margin-top: 2px;
+}
+.concepts-list li { border-bottom: 1px solid rgba(120,80,180,.07); }
+.concepts-list li:last-child { border-bottom: none; }
+
+/* ══════════ DEVLOG ══════════ */
+.log-entries { padding: 8px 0; }
+.log-entry {
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(120,80,180,.07);
+}
+.log-entry:last-child { border-bottom: none; }
+.log-meta { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.log-date {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .12em;
+  color: var(--ink3);
+}
+.log-tag {
+  font-size: 9px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 100px;
+  background: var(--mint2); color: #205040;
+}
+.log-body { font-size: 13px; line-height: 1.85; color: var(--ink2); }
+
+/* ══════════ AUDIO TOGGLE ══════════ */
+#audio-toggle {
+  position: fixed; bottom: 24px; right: 24px; z-index: 500;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,253,255,.88);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.9);
+  box-shadow: 0 4px 16px rgba(160,100,220,.15);
+  cursor: none; font-size: 16px; color: var(--ink2);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, box-shadow .15s;
+}
+#audio-toggle:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(160,100,220,.22); }
+#audio-toggle.playing { color: var(--pepsi-r); }
+
+/* ══════════ KONAMI OVERLAY ══════════ */
+#konami-overlay {
+  position: fixed; inset: 0; z-index: 99998;
+  background: rgba(42,32,53,.96);
+  display: none; align-items: center; justify-content: center;
+  cursor: none;
+}
+#konami-overlay.show { display: flex; }
+.konami-inner { text-align: center; animation: konami-flash .5s steps(1) infinite; }
+@keyframes konami-flash { 0%,49%{opacity:1} 50%,100%{opacity:.4} }
+.konami-word {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(80px,18vw,220px); line-height: .85;
+  letter-spacing: -.02em;
+  color: transparent; -webkit-text-stroke: 2px var(--pepsi-r);
+  text-shadow: 4px 4px 0 rgba(255,45,120,.2);
+}
+.konami-sub {
+  font-family: var(--mono); font-size: 16px; letter-spacing: .3em;
+  color: rgba(255,255,255,.3); margin-top: 24px;
+}
+
+.win-bar { cursor: none !important; }
+
+/* mobile */
+@media(max-width:720px){
+  .blog-layout,.now-layout{padding:12px 16px 60px}
+  .boards-grid{grid-template-columns:1fr}
+  .board-card:nth-child(n){border-right:none}
+  .now-block{grid-template-columns:100px 1fr;gap:10px}
+  .concept-row{grid-template-columns:1fr}
+  .concept-tag{grid-column:1}
+  #audio-toggle{bottom:16px;right:16px}
+}
+</style>
+
+<footer id="footer">
+  <span>SVDE / Sade Black ✿</span>
+  <span id="yr">©2026</span>
+</footer>
+
+<script>
+/* ═══════════════════════════
+   ANIMATED MESH GRADIENT CANVAS
+═══════════════════════════ */
+(function(){
+  const c = document.getElementById('mesh');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  let W, H, t = 0;
+  const orbs = [
+    { x:.2, y:.3, r:.45, col:[220,190,255] },
+    { x:.8, y:.2, r:.4,  col:[255,210,230] },
+    { x:.5, y:.8, r:.5,  col:[190,230,255] },
+    { x:.1, y:.75,r:.38, col:[210,255,225] },
+    { x:.9, y:.7, r:.42, col:[255,230,200] },
+  ];
+  Object.assign(c.style,{position:'fixed',inset:'0',pointerEvents:'none',zIndex:'0',opacity:'.55'});
+  function resize(){ W=c.width=window.innerWidth; H=c.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    orbs.forEach((o,i)=>{
+      const ox = o.x + Math.sin(t*0.4+i*1.3)*0.12;
+      const oy = o.y + Math.cos(t*0.3+i*0.9)*0.10;
+      const r  = Math.min(W,H)*o.r;
+      const g  = ctx.createRadialGradient(ox*W,oy*H,0,ox*W,oy*H,r);
+      const [R,G,B] = o.col;
+      g.addColorStop(0, `rgba(${R},${G},${B},0.22)`);
+      g.addColorStop(1, `rgba(${R},${G},${B},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    });
+    t += 0.006;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ═══════════════════════════
+   CURSOR — retro pixel arrow
+═══════════════════════════ */
+(function(){
+  const cur = document.getElementById('cursor');
+  const ctx = cur.getContext('2d');
+  const S = 2;
+
+  const G = [
+    [2,0,0,0,0,0,0,0,0,0,0,0],
+    [2,2,0,0,0,0,0,0,0,0,0,0],
+    [2,1,2,0,0,0,0,0,0,0,0,0],
+    [2,1,1,2,0,0,0,0,0,0,0,0],
+    [2,1,1,1,2,0,0,0,0,0,0,0],
+    [2,1,1,1,1,2,0,0,0,0,0,0],
+    [2,1,1,1,1,1,2,0,0,0,0,0],
+    [2,1,1,1,1,1,1,2,0,0,0,0],
+    [2,1,1,1,1,1,1,1,2,0,0,0],
+    [2,1,1,1,1,1,1,1,1,2,0,0],
+    [2,1,1,1,1,1,1,1,1,1,2,0],
+    [2,1,1,1,1,1,1,2,2,2,2,2],
+    [2,1,1,1,2,1,1,2,0,0,0,0],
+    [2,1,1,2,0,2,1,1,2,0,0,0],
+    [2,1,2,0,0,0,2,1,1,2,0,0],
+    [2,2,0,0,0,0,2,1,1,2,0,0],
+    [0,0,0,0,0,0,0,2,1,1,2,0],
+    [0,0,0,0,0,0,0,2,1,1,2,0],
+    [0,0,0,0,0,0,0,0,2,1,2,0],
+    [0,0,0,0,0,0,0,0,2,2,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+  ];
+  const ROWS = G.length, COLS = G[0].length;
+  cur.width  = COLS * S;
+  cur.height = ROWS * S;
+  cur.style.width  = cur.width  + 'px';
+  cur.style.height = cur.height + 'px';
+  // position at 0,0 always — move via transform so hotspot = exact top-left
+  cur.style.left = '0px';
+  cur.style.top  = '0px';
+
+  const PAL = { 1: '#ff2d78', 2: '#ffffff' };
+  ctx.imageSmoothingEnabled = false;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++) {
+      const v = G[r][c];
+      if (!v) continue;
+      ctx.fillStyle = PAL[v];
+      ctx.fillRect(c * S, r * S, S, S);
+    }
+
+  document.addEventListener('mousemove', e => {
+    // translate so canvas top-left = mouse position = hotspot
+    cur.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
+  }, { passive: true });
+})();
+
+function bindCursor() {}
+
+
+/* ═══════════════════════════
+   PROJECT DATA
+═══════════════════════════ */
+const PROJECTS = {
+  tender: { name:'TENDER', ol:[1,4], year:'2026', type:'Horror Game', platform:'Godot 4', status:'active', statusLabel:'In Development', role:'Design · Code · Direction', banner:'tender',
+    desc:['A first-person psychological horror caretaking game. the entity at its center cannot be looked at directly — the player must care for something they are forbidden from seeing.','The core mechanic is built around peripheral vision and the physics of avoidance. you know it\'s there. you can hear it. you can feel the weight of the room change when it moves. looking is the failure state.','TENDER asks what it means to care for something when acknowledgment destroys it. every design decision — lighting, audio cues, object placement — serves that central terror.'],
+    specs:[['Engine','Godot 4.x / GDScript'],['Genre','Psychological Horror'],['Perspective','First-Person'],['Core Mechanic','Look-aversion / Peripheral care'],['Endings','3 (trust-gated) + hidden path'],['Hidden Bool','ever_looked'],['Platform','PC / itch.io'],['Status','GDD complete, prototype in progress']], next:'spore', nextName:'SPORE' },
+  spore: { name:'SPORE', ol:[2], year:'2025', type:'Federated Platform', platform:'Node.js', status:'deployed', statusLabel:'Live — spore.bond', role:'Architecture · Code · Design', banner:'spore',
+    desc:['A federated microblogging platform built from scratch. live at spore.bond as of v0. the intent is a space built on different assumptions than existing social infrastructure.','Magic link auth, path-based profiles, a custom Spore Markdown dialect. v0.2 scope adds post threading, Spaces, long-form Pages, and media handling.','Running Node.js on Render with better-sqlite3. persistence is the active design problem.'],
+    specs:[['Stack','Node.js / better-sqlite3'],['Auth','Magic link (passwordless)'],['Hosting','Render / Cloudflare DNS'],['Version','v0 live, v0.2 scoped'],['URL','spore.bond'],['Vocab','matter · fruiting · substrate · threading']], next:'dead-code', nextName:'DEAD.CODE' },
+  'dead-code': { name:'DEAD.CODE', ol:[5,6,7,8], year:'2025', type:'Browser Tool', platform:'Web Audio API', status:'active', statusLabel:'Active Development', role:'Design · Code', banner:'deadcode',
+    desc:['A browser-based dead coding environment built around gravelang — a custom DSL designed for sonic decomposition. code that rots. sequences that degrade.','Three modes: NECROMANCY / DECAY / ENTROPY. four sound packs. a persistent graveyard via localStorage. AUTOPSY mode exposes the internal state of a dying sequence.','The aesthetic premise is that errors are events, not failures.'],
+    specs:[['Stack','HTML / Web Audio API / JS'],['DSL','gravelang (custom)'],['Modes','NECROMANCY / DECAY / ENTROPY'],['Sound Packs','4'],['Lines','~3045'],['Persistence','localStorage graveyard']], next:'ds9000', nextName:'DS-9000' },
+  ds9000: { name:'DS-9000', ol:[3,4], year:'2025', type:'Sequencer / Game', platform:'Web Audio API', status:'active', statusLabel:'Active Development', role:'Design · Code', banner:'ds9000',
+    desc:['A dungeon crawler where the dungeon is a sequencer. enemy positions map directly to sequencer steps — movement is rhythm, rhythm is movement.','The game space and the sonic space are the same space. clearing a room changes the beat.','Web Audio API, single-file HTML, no dependencies. relic-unlocked audio effects.'],
+    specs:[['Stack','HTML / Web Audio API / Canvas'],['Genre','Dungeon crawler × Sequencer'],['Core Mechanic','Enemy position = sequencer step'],['Effects','Relic-unlocked (reverb, bit-crush, delay)'],['Format','Single-file HTML']], next:'dead-star', nextName:'Dead Star' },
+  'dead-star': { name:'Dead Star', ol:[5,6,7,8], year:'2025', type:'VST / Audio Tool', platform:'Python prototype', status:'concept', statusLabel:'Prototype Stage', role:'Concept · Design · Prototype', banner:'deadstar',
+    desc:['An additive synthesizer where each partial has a lifespan — a countdown. partials are born, age, and die. the sound you hear is always already dying.','The synthesis model treats time as a material. a Python prototype with tkinter UI exists. the VST spec is fully written.','The working title refers to the light from a star that no longer exists.'],
+    specs:[['Type','Additive Synthesizer'],['Concept','Per-partial lifespan countdown'],['Prototype','Python / tkinter'],['Target','VST3 / AU'],['UI Mockup','React (designed)'],['Partials','Variable, independent decay timers']], next:'dropbox', nextName:'DROPBOX' },
+  dropbox: { name:'DROPBOX', ol:[4,5,6], year:'2025', type:'Web App', platform:'Browser', status:'active', statusLabel:'Active', role:'Design · Code', banner:'dropbox',
+    desc:['A VHS return slot simulator. the interface is a retro OS — the kind of desktop that exists only in the early-internet imagination.','Drop something in. the slot takes it. what happens next is the experience.','An exercise in UI as ritual.'],
+    specs:[['Stack','HTML / CSS / JS'],['Aesthetic','Retro OS / VHS'],['Themes','5'],['Format','Single-file HTML'],['Interaction','Drag-and-drop as ritual']], next:'chromasynth', nextName:'CHROMASYNTH' },
+  chromasynth: { name:'CHROMASYNTH', ol:[5,6,7,8,9], year:'2024', type:'Visualizer / Audio Tool', platform:'Web Audio API', status:'active', statusLabel:'Active', role:'Design · Code', banner:'chromasynth',
+    desc:['A genre-adaptive music visualizer. the visual system reads audio input and reconfigures itself to match detected genre.','Pixel painting with FFT pitch detection. genre-specific UI theming.','Browser tool — no install, no upload.'],
+    specs:[['Stack','HTML / Web Audio API / CSS filters'],['Input','Mic / line-in via getUserMedia'],['Feature','FFT → genre classification'],['Visual','CSS filter chain + tile grid'],['Format','Single-file HTML']], next:'flora', nextName:'FLORA / FAUNA / FUNGA' },
+  flora: { name:'FLORA / FAUNA / FUNGA', ol:[], year:'2024', type:'Synth Plugin Trio', platform:'Concept / Spec', status:'concept', statusLabel:'Design Phase', role:'Concept · Sound Design · Architecture', banner:'flora',
+    desc:['Three interconnected synthesizer plugins — each representing a different kingdom of life. FUNGA routes signals between the other two, acting as the mycorrhizal network.','FLORA is generative — slow, photosynthetic, patient. FAUNA is reactive. FUNGA is connective.','A concept for a plugin ecosystem where the tools have a relationship, not just a shared aesthetic.'],
+    specs:[['Type','Interconnected synth trio'],['FLORA','Generative / slow / additive'],['FAUNA','Reactive / short decay / FM'],['FUNGA','Signal router (no direct output)'],['Format','Proposed: VST3 / AU'],['Status','Concept spec complete']], next:'seance', nextName:'SÉANCE MACHINE' },
+  seance: { name:'SÉANCE MACHINE', ol:[7,8], year:'2024', type:'Modular Web Audio', platform:'Web Audio API', status:'active', statusLabel:'Built', role:'Design · Code', banner:'seance',
+    desc:['A modular web audio workstation with occult-themed modules and patch cable leylines. modules: ouija, planchette, mirror, pendulum.','Built as a self-contained HTML file. patch cables are drawn SVG arcs. routing is real Web Audio API routing.','The occult framing is also the UX metaphor. you are assembling a ritual.'],
+    specs:[['Stack','HTML / Web Audio API / SVG'],['Modules','Ouija · Planchette · Mirror · Pendulum'],['Routing','Real Web Audio node routing'],['Format','Single-file HTML'],['Metaphor','Ritual assembly as modular patching']], next:'gravedigging', nextName:'GRAVEDIGGING' },
+  gravedigging: { name:'GRAVEDIGGING', ol:[5,6,7,8,9,10,11], year:'2024', type:'File Explorer Tool', platform:'Browser', status:'active', statusLabel:'Built', role:'Design · Code', banner:'gravedigging',
+    desc:['A file explorer with tombstone UI. each file is a grave marker. deleting is burial. the graveyard grows.','Five themes. bulk actions. export.','The horror framing turns a utility into something that makes you pause before you delete.'],
+    specs:[['Stack','HTML / CSS / JS'],['UI Metaphor','Tombstone file system'],['Themes','5'],['Actions','Bulk select · Export · Burial (delete)'],['Format','Standalone HTML']], next:'tender', nextName:'TENDER' }
+};
+
+/* ═══════════════════════════
+   BANNER BUILDER (from v4, colours already overridden by CSS)
+═══════════════════════════ */
+function buildBanner(slug){
+  switch(slug){
+    case 'tender': return `<div class="proj-banner banner-tender">${[120,80,55,38,22].map(s=>`<div class="b-ring" style="width:${s}%;aspect-ratio:1"></div>`).join('')}<div class="b-iris"></div><div class="b-pupil"></div><div class="b-slash"></div>${[15,30,45,55,70,80].map(p=>`<div class="b-line" style="top:${p}%"></div>`).join('')}</div>`;
+    case 'spore':{const nodes=[{x:18,y:55,r:3},{x:35,y:30,r:2},{x:52,y:60,r:4},{x:68,y:25,r:2.5},{x:78,y:65,r:3},{x:42,y:75,r:2},{x:62,y:45,r:2},{x:25,y:72,r:1.5},{x:85,y:42,r:2},{x:55,y:15,r:1.5}],threads=[[0,1],[0,2],[1,2],[2,3],[2,4],[2,5],[3,6],[4,6],[5,7],[6,8],[3,9],[1,9]];const nH=nodes.map(n=>`<div class="b-node" style="width:${n.r*2}px;height:${n.r*2}px;top:${n.y}%;left:${n.x}%;transform:translate(-50%,-50%);opacity:.6"></div>`).join('');const tH=threads.map(([a,b])=>{const ax=nodes[a].x,ay=nodes[a].y,bx=nodes[b].x,by=nodes[b].y,len=Math.sqrt((bx-ax)**2+(by-ay)**2),ang=Math.atan2(by-ay,bx-ax)*180/Math.PI;return`<div class="b-thread" style="left:${ax}%;top:${ay}%;width:${len}%;transform:rotate(${ang}deg);background:rgba(80,160,120,.1)"></div>`;}).join('');return`<div class="proj-banner banner-spore">${tH}${nH}<div class="b-glow"></div></div>`;}
+    case 'deadcode':{const bars=Array.from({length:48},(_,i)=>{const d=Math.max(.05,1-(i/48)*.7),h=(4+Math.random()*42)*d,op=(.3+Math.random()*.5)*d;return`<div class="b-bar" style="height:${h}px;width:${100/52}%;opacity:${op}"></div>`;}).join('');const chars=['_','░','▒','▓','■','□','◈','◉','⊗','⊙'].map((c,i)=>`<div class="b-char" style="top:${15+i*7}%;left:${5+i*9}%;opacity:${.15+i*.03}">${c}</div>`).join('');return`<div class="proj-banner banner-deadcode"><div class="b-wave-row" style="top:30%;height:55%;">${bars}</div>${chars}</div>`;}
+    case 'ds9000':{const cols=16,rows=5,pat=[[1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,0],[0,1,0,1,0,0,1,0,0,1,0,1,0,0,1,0],[0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,1],[1,0,0,1,1,0,0,1,0,1,0,0,1,0,0,1],[0,1,0,0,0,1,1,0,1,0,0,1,0,1,0,0]],cw=28,totalW=cols*(cw+4)-4;const cells=pat.flatMap((row,ri)=>row.map((v,ci)=>`<div class="b-cell${v?' on':''}${v&&ci===7?' hot':''}" style="width:${cw}px;height:18px"></div>`)).join('');return`<div class="proj-banner banner-ds9000"><div class="b-grid" style="grid-template-columns:repeat(${cols},${cw}px);width:${totalW}px;position:relative">${cells}<div class="b-playhead"></div></div></div>`;}
+    case 'deadstar':{const arcs=[{r:8,op:.7,clr:'var(--pepsi-r)'},{r:16,op:.45,clr:'var(--pepsi-b)'},{r:26,op:.3,clr:'var(--lav)'},{r:38,op:.18,clr:'var(--pepsi-r)'},{r:52,op:.1,clr:'var(--pepsi-b)'},{r:68,op:.06,clr:'var(--lav)'}];const aH=arcs.map(a=>`<div class="b-arc" style="width:${a.r*2}%;border-color:${a.clr};opacity:${a.op}"></div>`).join('');const dH=Array.from({length:18},()=>{const a=Math.random()*360,d=10+Math.random()*42,x=50+Math.cos(a*Math.PI/180)*d,y=50+Math.sin(a*Math.PI/180)*d,dur=1.5+Math.random()*3,dly=Math.random()*2,sz=1+Math.random()*2;return`<div class="b-star-dot" style="width:${sz}px;height:${sz}px;top:${y}%;left:${x}%;animation-duration:${dur}s;animation-delay:${dly}s;transform:translate(-50%,-50%)"></div>`;}).join('');return`<div class="proj-banner banner-deadstar">${aH}${dH}</div>`;}
+    case 'dropbox': return `<div class="proj-banner banner-dropbox"><div class="b-monitor"><div class="b-screen"><div class="b-scanline"></div><div class="b-cursor">█</div></div></div><div class="b-slot"></div><div class="b-stand"></div></div>`;
+    case 'chromasynth':{const heights=[12,28,55,82,70,44,90,65,38,72,88,60,42,78,50,35,66,82,58,40,75,92,55,30,68,85,48,62,77,45];const colors=['#d4c8f0','#f7c5b0','#b8e8d8','#a8d4f0','#f0a8c8','#c8f0a8','#f0d4a8','#a8c8f0','#e8a8f0','#a8f0d4'];const bars=heights.map((h,i)=>`<div class="b-cbar" style="height:${h}%;background:${colors[Math.floor(i/3)%colors.length]};opacity:${.5+Math.random()*.4}"></div>`).join('');return`<div class="proj-banner banner-chromasynth"><div class="b-bar-row">${bars}</div></div>`;}
+    case 'flora':{const circles=[{x:38,y:45,r:26,clr:'rgba(80,180,80,.4)',label:'FLORA'},{x:58,y:38,r:22,clr:'rgba(200,100,40,.35)',label:'FAUNA'},{x:50,y:60,r:20,clr:'rgba(120,80,200,.35)',label:'FUNGA'}];const cH=circles.map(c=>`<div class="b-circle" style="width:${c.r*2}%;left:${c.x-c.r}%;top:${c.y-c.r}%;border-color:${c.clr};transform:none"></div>`).join('');const lH=circles.map(c=>`<div style="position:absolute;left:${c.x}%;top:${c.y}%;transform:translate(-50%,-50%);font-family:var(--serif);font-style:italic;font-size:clamp(.65rem,1.1vw,.95rem);color:${c.clr};opacity:.9">${c.label}</div>`).join('');return`<div class="proj-banner banner-flora">${cH}${lH}</div>`;}
+    case 'seance':{const modules=[{x:8,y:20,w:18,h:55,label:'OUIJA'},{x:30,y:15,w:16,h:60,label:'PLANCHET'},{x:50,y:25,w:18,h:50,label:'MIRROR'},{x:72,y:18,w:16,h:58,label:'PENDULUM'}];const mH=modules.map(m=>`<div class="b-module" style="left:${m.x}%;top:${m.y}%;width:${m.w}%;height:${m.h}%"><div style="position:absolute;bottom:.5rem;left:0;right:0;text-align:center;font-family:var(--mono);font-size:clamp(.28rem,.45vw,.45rem);letter-spacing:.15em;color:rgba(120,80,180,.5)">${m.label}</div></div>`).join('');const cables=[{x1:26,y1:42,x2:30,y2:39,clr:'rgba(212,200,240,.8)'},{x1:46,y1:55,x2:50,y2:49,clr:'rgba(247,197,176,.8)'},{x1:68,y1:47,x2:72,y2:44,clr:'rgba(184,232,216,.8)'}];const cH=cables.map(c=>`<div class="b-cable" style="left:${c.x1}%;top:${c.y1}%;width:${c.x2-c.x1+2}%;height:${Math.abs(c.y2-c.y1)+10}%;border-color:${c.clr};transform:translateY(-60%)"></div>`).join('');return`<div class="proj-banner banner-seance">${mH}${cH}</div>`;}
+    case 'gravedigging':{const stones=[{x:20,y:25,w:14,h:22},{x:38,y:30,w:12,h:18},{x:55,y:22,w:15,h:25},{x:72,y:28,w:13,h:20}];const sH=stones.map(s=>`<div class="b-stone" style="left:${s.x}%;top:${s.y}%;width:${s.w}%;height:${s.h}%"><div class="b-cross" style="position:absolute;top:20%;left:50%;transform:translateX(-50%);width:5px;height:${s.h*.5}%"></div></div>`).join('');const nms=['WELL.exe','ECHO.html','HURT.gdx','PULSE.wav'].map((n,i)=>`<div style="position:absolute;left:${stones[i].x+stones[i].w/2}%;top:${stones[i].y+stones[i].h/2+4}%;transform:translateX(-50%);font-family:var(--mono);font-size:clamp(.28rem,.42vw,.42rem);color:rgba(120,80,180,.4);white-space:nowrap">${n}</div>`).join('');return`<div class="proj-banner banner-gravedigging">${sH}${nms}<div class="b-ground"></div></div>`;}
+    default: return `<div class="proj-banner"></div>`;
+  }
+}
+
+/* ═══════════════════════════
+   RENDER PROJECT
+═══════════════════════════ */
+/* per-project typographic treatment:
+   each entry is an array matching the name's characters.
+   values: 's'=solid, 'ol'=thin blue outline, 'ol2'=fat red outline,
+   'gh'=ghost, 'hl'=holo gradient, 'sk'=stacked shadow,
+   'ig'=ink-on-ghost, 'rb'=raised emboss, 'ic'=italic outline, 'ws'=wide ghost
+   null = no span (plain) */
+const TYPE_MAP = {
+  tender:       ['sk','ol','s','ig','ol2','rb'],          // T-E-N-D-E-R
+  spore:        ['hl','s','ol','rb','gh'],                 // S-P-O-R-E
+  'dead-code':  ['ol2','s','ig','ol',null,'s','ol','ol2','gh'], // D-E-A-D-.-C-O-D-E
+  ds9000:       ['rb','ol',null,'sk','ol2','ol'],          // D-S---9-0-0-0
+  'dead-star':  ['s','gh','ig','ol',null,'ol2','s','rb','rb'], // D-e-a-d- -S-t-a-r
+  dropbox:      ['hl','sk','ol','s','ol2','ig','ws'],      // D-R-O-P-B-O-X
+  chromasynth:  ['sk','s','rb','ol','hl','gh','ol2','s','ig','ol'], // C-H-R-O-M-A-S-Y-N-T-H
+  flora:        ['hl','s','ol','rb','ws',null,'ic','gh','ol2','s','gh',null,'ic','s','rb','gh','gh'],
+  seance:       ['ol2','gh','ic','s','ol',null,'hl','s','ol2','rb','gh','ig','ol'],
+  gravedigging: ['sk','rb','ol','gh','s','ol2','ig','s','ol','ol2','gh','ws']
+};
+
+function renderLetters(name, slug){
+  const map = TYPE_MAP[slug] || [];
+  return name.split('').map((ch, i) => {
+    const cls = map[i];
+    if (!cls || ch === ' ') return ch === ' ' ? ' ' : ch;
+    return `<span class="${cls}">${ch}</span>`;
+  }).join('');
+}
+
+function renderProject(slug){
+  const d = PROJECTS[slug]; if(!d) return;
+  const letters = renderLetters(d.name, slug);
+  const specs = d.specs.map(([k,v])=>`<li><span class="spec-key">${k}</span><span class="spec-val">${v}</span></li>`).join('');
+  const desc = d.desc.map(p=>`<p>${p}</p>`).join('');
+  const statusCls = d.status;
+
+  document.getElementById('project-content').innerHTML = `
+<div class="proj-detail-layout">
+  <div><button class="proj-back-btn reveal" id="back-btn">All Work</button></div>
+
+  <div class="win proj-title-win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">${d.name.toLowerCase()}</span></div>
+    <div class="proj-title-inner" data-name="${d.name}">
+      <h1 class="proj-hero-name">${letters}</h1>
+    </div>
+  </div>
+
+  <div class="win proj-meta-win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">meta.txt</span></div>
+    <div class="proj-meta-inner">
+      <div class="proj-meta-item"><span class="proj-meta-label">Year</span><span class="proj-meta-value">${d.year}</span></div>
+      <div class="proj-meta-item"><span class="proj-meta-label">Type</span><span class="proj-meta-value">${d.type}</span></div>
+      <div class="proj-meta-item"><span class="proj-meta-label">Platform</span><span class="proj-meta-value">${d.platform}</span></div>
+      <div class="proj-meta-item"><span class="proj-meta-label">Role</span><span class="proj-meta-value">${d.role}</span></div>
+      <div class="proj-meta-item"><span class="proj-meta-label">Status</span><span class="proj-status ${statusCls}">${d.statusLabel}</span></div>
+    </div>
+  </div>
+
+  <div class="reveal">${buildBanner(d.banner)}</div>
+
+  <div class="win proj-body-win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">about this project</span></div>
+    <div class="proj-body-inner">
+      <div>
+        <p class="proj-section-label">About</p>
+        <div class="proj-desc">${desc}</div>
+      </div>
+      <div>
+        <p class="proj-section-label">Specs</p>
+        <ul class="proj-specs">${specs}</ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="win proj-next-win reveal">
+    <div class="win-bar"><div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div><span class="win-title">next ✿</span></div>
+    <div class="proj-next-inner">
+      <span class="proj-next-label">Next Project</span>
+      <a class="proj-next-name" href="#" data-page="project" data-project="${d.next}">${d.nextName}</a>
+    </div>
+  </div>
+</div>`;
+  document.getElementById('back-btn').addEventListener('click', ()=>navigate('work'));
+  bindCursor();
+  setTimeout(triggerReveals, 60);
+}
+
+/* ═══════════════════════════
+   FILTER
+═══════════════════════════ */
+function applyFilter(cat){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active', b.dataset.filter===cat));
+  document.querySelectorAll('#home-list li, .project-grid li').forEach(li=>{
+    const show = cat==='all' || li.dataset.cat===cat;
+    li.style.display = show ? '' : 'none';
+    show ? li.removeAttribute('data-hidden') : li.setAttribute('data-hidden','');
+  });
+}
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('.filter-btn');
+  if(btn){ applyFilter(btn.dataset.filter); return; }
+});
+
+/* ═══════════════════════════
+   NAVIGATION
+═══════════════════════════ */
+function navigate(pageId, projectSlug){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  if(pageId==='project'&&projectSlug){
+    renderProject(projectSlug);
+    document.getElementById('page-project').classList.add('active');
+    const wl = document.querySelector('.nav-links a[data-page="work"]');
+    if(wl) wl.classList.add('active');
+  } else {
+    const target = document.getElementById('page-'+pageId);
+    if(target) target.classList.add('active');
+    const al = document.querySelector(`.nav-links a[data-page="${pageId}"]`);
+    if(al) al.classList.add('active');
+  }
+  window.scrollTo(0,0);
+  setTimeout(triggerReveals, 60);
+  bindCursor();
+}
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-page]');
+  if(!el||el.classList.contains('filter-btn')) return;
+  e.preventDefault();
+  (window.navigate || navigate)(el.dataset.page, el.dataset.project);
+});
+
+/* ═══════════════════════════
+   REVEAL
+═══════════════════════════ */
+function triggerReveals(){
+  const els = document.querySelectorAll('.page.active .reveal:not(.in)');
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach((entry,i)=>{
+      if(entry.isIntersecting){
+        entry.target.style.transitionDelay = (i*.045)+'s';
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  },{threshold:.05});
+  els.forEach(el=>io.observe(el));
+}
+
+/* ═══════════════════════════
+   INIT
+═══════════════════════════ */
+document.getElementById('yr').textContent = '©'+new Date().getFullYear();
+bindCursor();
+triggerReveals();
+
+/* ═══════════════════════════
+   BLOG DATA
+═══════════════════════════ */
+const BLOG_POSTS = [
+  {
+    id: 'loading-dread',
+    title: 'the loading screen as horror framework',
+    date: 'ENTRY #007 · 2026',
+    tags: ['writing','horror','theory'],
+    excerpt: 'the progress bar that arrests at 99% for too long.',
+    body: `the progress bar that arrests at 99% for too long. the cursor that never resolves. the machine that is definitely still doing something but won't tell you what.
+
+i've been trying to articulate why this is the purest form of dread i know, and i think it comes down to this: the loading screen is the only place in media where you are explicitly told that something is coming and then made to wait for it with no information about what it will be.
+
+a jump scare tells you when it's arriving. a slow burn builds dread through accumulation. but the loading screen just says: something is happening. you can't skip it. you can't look away. you are already inside it.
+
+the body enters a strange state during a long load. i've noticed it in myself — a kind of held breath that isn't really held breath. a waiting that isn't quite patience. you're poised for something and the posing has no endpoint.
+
+this is the structure of most things that have ever scared me in my actual life. not the thing. the knowing something is coming and having no information about its shape.
+
+i think about this whenever a machine takes too long. i think: whoever designed this experience, intentionally or not, built the most honest horror framework i've ever encountered.`
+  },
+  {
+    id: 'pixel-rune',
+    title: 'the pixel as rune: a short argument',
+    date: 'ENTRY #005 · 2026',
+    tags: ['theory','art','ritual'],
+    excerpt: 'every pixel is a decision. a commitment to a single point of light or dark in an infinite grid.',
+    body: `every pixel is a decision. a commitment to a single point of light or dark in an infinite grid. most people don't think about this the way i do.
+
+the pixel artist and the sigil-maker are performing the same operation. they're both choosing which points in a field get activated and which don't. they're both working within a constraint — the grid, the parchment — and finding meaning inside the constraint rather than despite it.
+
+the screen is parchment. the cursor is the stylus. the save file is the grimoire.
+
+i've been thinking about this because someone asked me why i work in pixel art when i could work in higher resolution. the question assumed that higher resolution is the goal. it isn't. the goal is intentionality. a 32×32 sprite has 1,024 decisions in it. i can't hide behind resolution. neither can the sigil-maker.
+
+this has always been a practice. the screen didn't invent it. the screen just gave it electricity.`
+  },
+  {
+    id: 'horror-spatial',
+    title: 'horror is a spatial problem',
+    date: 'ENTRY #003 · 2025',
+    tags: ['horror','game design','theory'],
+    excerpt: 'every horror game is really a geometry problem. the monster is less important than the room.',
+    body: `every horror game is really a geometry problem. the monster is less important than the room.
+
+i've been playing through my own WELL again — the one where you look down and something looks back — and what i notice is that the horror isn't in the entity at the bottom. it's in the radius of the well. the shape of not knowing how far down it goes.
+
+TENDER is built on this logic. the entity isn't in the center of the room. it's in your peripheral vision. the geometry of your own eye creates the constraint. you can't look at it. not because the game stops you with a wall. because you have decided, together with the mechanic, that looking would be the end of something.
+
+horror that works is always about what the space forces you to know. not what it shows you.
+
+a narrow corridor is not scary because something might be in it. it's scary because you have no choice but to walk through it. the scariest rooms are the ones where you can see everything and still don't know what's wrong.
+
+i think this is why empty rooms work. the space is telling you something happened here and the only information is absence. you have to construct the event from the shape of the absence.
+
+that's the game. the game is always that.`
+  },
+  {
+    id: 'sound-always-wrong',
+    title: 'the sound is always wrong before the image',
+    date: 'ENTRY #001 · 2025',
+    tags: ['audio','horror','production'],
+    excerpt: 'in every piece of horror media that has ever actually gotten to me, the sound was wrong before anything was visible.',
+    body: `in every piece of horror media that has ever actually gotten to me, the sound was wrong before anything was visible.
+
+not the jump scare sting. not the dramatic swell. the small wrongness. the frequency that doesn't belong in the room. the sound that keeps going one beat after it should have stopped.
+
+i've been making music for a long time and i think what i'm actually trying to do — in the horror games, in the dead star synth work, in the gravelang stuff — is find the frequency that doesn't belong in the room.
+
+ECHO was an attempt to make that the entire game. your voice comes back wrong. not distorted, not obviously processed. just slightly, unplacably wrong. the pitch is right. the timing is right. something else isn't.
+
+the body registers wrongness in audio before the brain identifies it. i'm interested in building things that live in that gap. after the body knows and before the mind catches up.
+
+a sound that ages. a sound that has been somewhere. a sound that has a history you can't access.
+
+that's what the dead star is. a sound that left its source before you were born. arriving now, intact, from something that no longer exists.
+
+you can't verify the source. you can only receive the signal.`
+  }
+];
+
+/* render blog index */
+function renderBlogIndex() {
+  const list = document.getElementById('blog-list');
+  if (!list) return;
+  list.innerHTML = BLOG_POSTS.map(p => `
+    <li style="border-bottom:1px solid rgba(120,80,180,.06)">
+      <a class="blog-row" href="#" data-blog="${p.id}">
+        <div>
+          <div class="blog-row-title">${p.title}</div>
+          <div class="blog-row-excerpt">${p.excerpt}</div>
+        </div>
+        <div class="blog-row-meta">${p.tags[0]}<br>${p.date.split('·')[1].trim()}</div>
+      </a>
+    </li>`).join('');
+  list.querySelectorAll('[data-blog]').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); openBlogPost(el.dataset.blog); });
+  });
+}
+
+function openBlogPost(id) {
+  const post = BLOG_POSTS.find(p => p.id === id);
+  if (!post) return;
+  const idx = document.getElementById('blog-index');
+  const win = document.getElementById('blog-post-win');
+  const tit = document.getElementById('blog-post-win-title');
+  const con = document.getElementById('blog-post-content');
+  idx.style.display = 'none';
+  win.style.display = 'block';
+  tit.textContent = post.title;
+  con.innerHTML = `
+    <div class="blog-post-inner">
+      <button class="blog-post-back" id="blog-back">all entries</button>
+      <div class="blog-post-date">${post.date}</div>
+      <h2 class="blog-post-title">${post.title}</h2>
+      <div class="blog-post-tags">${post.tags.map(t=>`<span class="blog-post-tag">${t}</span>`).join('')}</div>
+      <div class="blog-post-body">${post.body.split('\n\n').map(p=>`<p>${p}</p>`).join('')}</div>
+    </div>`;
+  document.getElementById('blog-back').addEventListener('click', () => {
+    win.style.display = 'none';
+    idx.style.display = 'block';
+  });
+  window.scrollTo(0,0);
+  bindCursor();
+}
+renderBlogIndex();
+
+/* patch navigate to handle blog page reset */
+const _origNavigate = navigate;
+window.navigate = function(pageId, projectSlug) {
+  const blogIdx = document.getElementById('blog-index');
+  const blogPost = document.getElementById('blog-post-win');
+  if (blogIdx) blogIdx.style.display = 'block';
+  if (blogPost) blogPost.style.display = 'none';
+  _origNavigate(pageId, projectSlug);
+};
+
+/* ═══════════════════════════
+   LOADING SCREEN
+═══════════════════════════ */
+(function(){
+  const loader = document.getElementById('page-loader');
+  const bar    = document.getElementById('loader-bar');
+  const status = document.getElementById('loader-status');
+  const msgs   = ['initializing...','loading assets...','constructing windows...','almost there...','welcome ✿'];
+  let pct = 0, mi = 0;
+  const iv = setInterval(() => {
+    pct += 8 + Math.random() * 14;
+    if (pct > 100) pct = 100;
+    bar.style.width = pct + '%';
+    const ni = Math.floor((pct / 100) * (msgs.length - 1));
+    if (ni > mi) { mi = ni; status.textContent = msgs[mi]; }
+    if (pct >= 100) {
+      clearInterval(iv);
+      setTimeout(() => { loader.classList.add('fade-out'); setTimeout(() => loader.remove(), 700); }, 300);
+    }
+  }, 120);
+})();
+
+/* ═══════════════════════════
+   DRAGGABLE WINDOWS
+═══════════════════════════ */
+(function(){
+  let dragging = null, ghost = null, ox = 0, oy = 0;
+
+  document.querySelectorAll('.win').forEach(win => {
+    const bar = win.querySelector('.win-bar');
+    if (!bar) return;
+    bar.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('win-dot')) return;
+      e.preventDefault();
+
+      const rect = win.getBoundingClientRect();
+      ox = e.clientX - rect.left;
+      oy = e.clientY - rect.top;
+
+      ghost = document.createElement('div');
+      ghost.style.cssText = `width:${rect.width}px;height:${rect.height}px;visibility:hidden;flex-shrink:0;border-radius:18px;`;
+      win.parentNode.insertBefore(ghost, win.nextSibling);
+
+      win.style.position = 'fixed';
+      win.style.left   = rect.left + 'px';
+      win.style.top    = rect.top  + 'px';
+      win.style.width  = rect.width + 'px';
+      win.style.margin = '0';
+      win.style.zIndex = '500';
+      win.dataset.floating = '1';
+      dragging = win;
+    });
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    dragging.style.left = (e.clientX - ox) + 'px';
+    dragging.style.top  = (e.clientY - oy) + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging.style.zIndex = '10';
+    dragging = null;
+  });
+
+  // reset all windows to natural position
+  window.resetWindows = function() {
+    document.querySelectorAll('.win[data-floating]').forEach(win => {
+      win.style.position = '';
+      win.style.left = '';
+      win.style.top  = '';
+      win.style.width = '';
+      win.style.margin = '';
+      win.style.zIndex = '';
+      delete win.dataset.floating;
+    });
+    document.querySelectorAll('[data-win-ghost]').forEach(g => g.remove());
+    // also remove any orphaned ghosts
+    if (ghost) { ghost.remove(); ghost = null; }
+  };
+})();
+
+/* ═══════════════════════════
+   KEYBOARD SHORTCUTS
+═══════════════════════════ */
+(function(){
+  const SHORTCUTS = {
+    '0':       () => { window.resetWindows && window.resetWindows(); },
+    'h':       () => navigate('home'),
+    'w':       () => navigate('work'),
+    'g':       () => navigate('games'),
+    'b':       () => navigate('blog'),
+    'n':       () => navigate('now'),
+    'c':       () => navigate('concepts'),
+    'l':       () => navigate('log'),
+    'a':       () => navigate('about'),
+    '/':       () => navigate('contact'),
+    'Escape':  () => {
+      // close any open blog post back to index
+      const idx = document.getElementById('blog-index');
+      const win = document.getElementById('blog-post-win');
+      if (win && win.style.display !== 'none') {
+        win.style.display = 'none';
+        if (idx) idx.style.display = 'block';
+      }
+    },
+    '?': () => showShortcutHelp(),
+  };
+
+  function showShortcutHelp() {
+    let helpWin = document.getElementById('shortcut-help');
+    if (helpWin) { helpWin.remove(); return; }
+    helpWin = document.createElement('div');
+    helpWin.id = 'shortcut-help';
+    helpWin.style.cssText = `
+      position:fixed;bottom:72px;right:24px;z-index:800;
+      background:rgba(255,253,255,.92);
+      backdrop-filter:blur(24px);
+      border:1px solid rgba(255,255,255,.9);
+      border-radius:14px;
+      box-shadow:0 8px 32px rgba(160,100,220,.18);
+      padding:20px 24px;
+      font-family:var(--mono);font-size:13px;
+      color:var(--ink2);line-height:2;
+      min-width:240px;
+    `;
+    helpWin.innerHTML = `
+      <div style="font-size:11px;letter-spacing:.2em;color:var(--ink3);text-transform:uppercase;margin-bottom:8px">keyboard shortcuts</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">H</span> home</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">W</span> work</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">G</span> games</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">B</span> blog</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">N</span> now</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">C</span> concepts</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">L</span> log</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">A</span> about</div>
+      <div><span style="color:var(--pepsi-b);display:inline-block;width:24px">/</span> contact</div>
+      <div><span style="color:var(--pepsi-r);display:inline-block;width:24px">0</span> reset windows</div>
+      <div><span style="color:var(--pepsi-r);display:inline-block;width:24px">Esc</span> back / close</div>
+      <div><span style="color:var(--pepsi-r);display:inline-block;width:24px">?</span> toggle this</div>
+    `;
+    document.body.appendChild(helpWin);
+    // click outside to close
+    setTimeout(() => {
+      document.addEventListener('click', function c(ev) {
+        if (!helpWin.contains(ev.target)) { helpWin.remove(); document.removeEventListener('click',c); }
+      });
+    }, 100);
+  }
+
+  document.addEventListener('keydown', e => {
+    // don't fire if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const fn = SHORTCUTS[e.key];
+    if (fn) { e.preventDefault(); fn(); }
+  });
+
+  // show hint in footer
+  const footer = document.getElementById('footer');
+  if (footer) {
+    const hint = document.createElement('span');
+    hint.style.cssText = 'font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:rgba(120,80,180,.35);cursor:pointer';
+    hint.textContent = 'press ? for shortcuts';
+    hint.addEventListener('click', showShortcutHelp);
+    footer.appendChild(hint);
+  }
+})();
+
+/* ═══════════════════════════
+   AMBIENT AUDIO (web audio — no file)
+═══════════════════════════ */
+(function(){
+  const btn = document.getElementById('audio-toggle');
+  let ctx = null, playing = false, nodes = [];
+
+  function startAudio() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const master = ctx.createGain(); master.gain.value = 0.06; master.connect(ctx.destination);
+    // dreamy vaporwave drone — layered detuned oscillators
+    const freqs = [55, 82.4, 110, 164.8, 220, 261.6];
+    freqs.forEach((f, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filt = ctx.createBiquadFilter();
+      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.value = f * (1 + (Math.random() - 0.5) * 0.004);
+      filt.type = 'lowpass'; filt.frequency.value = 800;
+      gain.gain.value = 0.12 / (i + 1);
+      osc.connect(filt); filt.connect(gain); gain.connect(master);
+      osc.start();
+      // slow LFO on gain for shimmer
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.value = 0.08 + i * 0.03;
+      lfoGain.gain.value = 0.04;
+      lfo.connect(lfoGain); lfoGain.connect(gain.gain);
+      lfo.start();
+      nodes.push(osc, lfo);
+    });
+  }
+
+  btn.addEventListener('click', () => {
+    if (!playing) {
+      if (!ctx) startAudio();
+      else ctx.resume();
+      playing = true;
+      btn.classList.add('playing');
+      document.getElementById('audio-icon').textContent = '♫';
+    } else {
+      ctx.suspend();
+      playing = false;
+      btn.classList.remove('playing');
+      document.getElementById('audio-icon').textContent = '♪';
+    }
+  });
+})();
+
+/* ═══════════════════════════
+   KONAMI CODE EASTER EGG
+═══════════════════════════ */
+(function(){
+  const seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let idx = 0;
+  const overlay = document.getElementById('konami-overlay');
+  const word    = document.getElementById('konami-word');
+  const words   = ['SOLVE','COAGULA','SOLVE','COAGULA'];
+  let wi = 0;
+
+  document.addEventListener('keydown', e => {
+    if (e.key === seq[idx]) {
+      idx++;
+      if (idx === seq.length) {
+        idx = 0;
+        overlay.classList.add('show');
+        let flashes = 0;
+        const iv = setInterval(() => {
+          wi = (wi + 1) % words.length;
+          word.textContent = words[wi];
+          flashes++;
+          if (flashes > 10) {
+            clearInterval(iv);
+            setTimeout(() => overlay.classList.remove('show'), 800);
+          }
+        }, 220);
+      }
+    } else { idx = 0; }
+  });
+  overlay.addEventListener('click', () => overlay.classList.remove('show'));
+})();
+</script>
+</body>
+</html>
